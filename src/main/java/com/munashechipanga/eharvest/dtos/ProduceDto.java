@@ -1,18 +1,14 @@
-package com.munashechipanga.eharvest.entities;
+package com.munashechipanga.eharvest.dtos;
 
-import jakarta.persistence.*;
+import com.munashechipanga.eharvest.entities.Farmer;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.List;
 
-@Entity
 @Getter
 @Setter
-public class Produce {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class ProduceDto {
     private Long id;
     private String name;
     private String category;
@@ -22,8 +18,5 @@ public class Produce {
     private Double price;
     private LocalDate availableFrom;
     private LocalDate harvestDate;
-
-    @ManyToOne
     private Farmer farmer;
-
 }

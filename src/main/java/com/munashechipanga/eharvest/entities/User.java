@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
+@Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
@@ -25,7 +26,7 @@ public class User {
     @Column(unique = true)
     private String phoneNumber;
     private String address;
-    private boolean active;
-    private boolean verified;
-    private int trustScore;
+    private Boolean active;
+    private Boolean verified;
+    private Integer trustScore;
 }

@@ -7,13 +7,14 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "orders")
 @Getter
 @Setter
 public class Order {
     @Id @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     private LocalDateTime orderDate;
-    private double totalAmount;
+    private Double totalAmount;
     private String status; // PENDING, CONFIRMED, IN_TRANSIT, DELIVERED
 
     @ManyToOne
@@ -22,5 +23,5 @@ public class Order {
     @OneToOne
     private LogisticsRequest logisticsRequest;
 
-    private boolean escrowReleased;
+    private Boolean escrowReleased;
 }

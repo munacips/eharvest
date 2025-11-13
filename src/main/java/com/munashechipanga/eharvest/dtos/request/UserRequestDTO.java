@@ -16,21 +16,21 @@ public class UserRequestDTO {
     private String role;// "FARMER", "BUYER", "LOGISTICS"
     private String nationalId;
     private String address;
-    private boolean active;
-    private boolean verified;
-    private int trustScore;
+    private Boolean active;
+    private Boolean verified;
+    private Integer trustScore;
 
 
     // For Farmers
     private String farmName;
     private String farmLocation;
-    private int successfulSales;
-    private int unsuccessfulSales;
+    private Integer successfulSales;
+    private Integer unsuccessfulSales;
 
     // For Buyer
     private String companyName;
-    private int successfulBuys;
-    private int unsuccessfulBuys;
+    private Integer successfulBuys;
+    private Integer unsuccessfulBuys;
 
     // For Logistics Provider
     private String licenseNumber;

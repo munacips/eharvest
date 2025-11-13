@@ -21,7 +21,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
-    //@Autowired
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
@@ -81,21 +81,21 @@ public class UserServiceImpl implements UserService {
         if (dto.getEmail() != null) user.setEmail(dto.getEmail());
         if (dto.getPhoneNumber() != null) user.setPhoneNumber(dto.getPhoneNumber());
         if (dto.getPassword() != null) user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        //if (dto.isVerified() != null) user.setVerified(dto.isVerified());
-        //if (dto.getTrustScore() != null) user.setTrustScore(dto.getTrustScore());
-        //if (dto.isActive() != null) user.setActive(dto.isActive());
+        if (dto.getVerified() != null) user.setVerified(dto.getVerified());
+        if (dto.getTrustScore() != null) user.setTrustScore(dto.getTrustScore());
+        if (dto.getActive() != null) user.setActive(dto.getActive());
 
         if (user instanceof Farmer) {
             Farmer f = (Farmer) user;
             if (dto.getFarmName() != null) f.setFarmName(dto.getFarmName());
             if (dto.getFarmLocation() != null) f.setFarmLocation(dto.getFarmLocation());
-            //if (dto.getSuccessfulBuys() != null) f.setSuccessfulSales(dto.getSuccessfulBuys());
-            //if (dto.getUnsuccessfulSales() != null) f.setUnsuccessfulSales(dto.getUnsuccessfulSales());
+            if (dto.getSuccessfulBuys() != null) f.setSuccessfulSales(dto.getSuccessfulBuys());
+            if (dto.getUnsuccessfulSales() != null) f.setUnsuccessfulSales(dto.getUnsuccessfulSales());
         } else if (user instanceof Buyer) {
             Buyer b = (Buyer) user;
             if (dto.getCompanyName() != null) b.setCompanyName(dto.getCompanyName());
-            //if (dto.getSuccessfulBuys() != null) b.setSuccessfulBuys(dto.getSuccessfulBuys());
-            //if (dto.getUnsuccessfulBuys() != null) b.setUnsuccessfulBuys(dto.getUnsuccessfulBuys());
+            if (dto.getSuccessfulBuys() != null) b.setSuccessfulBuys(dto.getSuccessfulBuys());
+            if (dto.getUnsuccessfulBuys() != null) b.setUnsuccessfulBuys(dto.getUnsuccessfulBuys());
         } else if (user instanceof LogisticsProvider) {
             LogisticsProvider lp = (LogisticsProvider) user;
             if (dto.getLicenseNumber() != null) lp.setLicenseNumber(dto.getLicenseNumber());
@@ -134,9 +134,9 @@ public class UserServiceImpl implements UserService {
         dto.setLastName(user.getLastName());
         dto.setAddress(user.getAddress());
         dto.setEmail(user.getEmail());
-        dto.setActive(user.isActive());
+        dto.setActive(user.getActive());
         dto.setPhoneNumber(user.getPhoneNumber());
-        dto.setVerified(user.isVerified());
+        dto.setVerified(user.getVerified());
         dto.setTrustScore(user.getTrustScore());
 
         if (user instanceof Farmer) {

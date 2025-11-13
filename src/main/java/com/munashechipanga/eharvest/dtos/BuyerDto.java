@@ -1,14 +1,14 @@
-package com.munashechipanga.eharvest.entities;
+package com.munashechipanga.eharvest.dtos;
 
-import jakarta.persistence.Entity;
+import com.munashechipanga.eharvest.dtos.request.UserRequestDTO;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity
 @Getter
 @Setter
-public class Buyer extends User{
+public class BuyerDto extends UserRequestDTO {
     private String companyName;
     private Integer successfulBuys;
     private Integer unsuccessfulBuys;
+
 }

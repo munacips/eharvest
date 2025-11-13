@@ -13,7 +13,7 @@ public class LogisticsRequest {
     private String pickupLocation;
     private String deliveryLocation;
     private String status; // AWAITING_PICKUP, IN_TRANSIT, DELIVERED
-    private double cost;
+    private Double cost;
 
     @ManyToOne
     private LogisticsProvider assignedProvider;
