@@ -9,20 +9,19 @@ Content-Type: application/json
 
 {
 
-  "username": "admin",
-  "firstName" : "admin",
-  "lastName" : "system",
-  "email" : "admin@eharvest.com",
-  "phoneNumber" : "+263711787781",
+  "username": "munashe1",
+  "firstName" : "Munashe",
+  "lastName" : "Chipanga",
+  "email" : "munachipanga@gmail.com",
+  "phoneNumber" : "+263718549964",
   "password" : "password",
-  "role" : "FARMER",
+  "role" : "BUYER",
   "nationalId" : "63233728P43",
   "address" : "123 Home Way, House",
   "active" : true,
   "verified" : true,
   "trustScore" : 20,
-  "farmName" : "Gungwa",
-  "farmLocation" : "Bindura",
-  "successfulSales" : 0,
-  "unsuccessfulSales" : 0
+  "successfulBuys" : 0,
+  "unsuccessfulBuys" : 0,
+  "companyName": "CIPS"
 }

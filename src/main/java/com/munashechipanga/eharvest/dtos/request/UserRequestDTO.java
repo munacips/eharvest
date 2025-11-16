@@ -34,4 +34,5 @@ public class UserRequestDTO {
 
     // For Logistics Provider
     private String licenseNumber;
+    private String defensiveId;
 }

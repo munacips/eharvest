@@ -1,24 +1,18 @@
-package com.munashechipanga.eharvest.entities;
+package com.munashechipanga.eharvest.dtos;
 
-import jakarta.persistence.*;
+import com.munashechipanga.eharvest.entities.User;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Entity
 @Getter
 @Setter
-public class Review {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class ReviewDto {
     private Long id;
-    private Integer rating; // 1 - 5
+    private Integer rating;
     private String comment;
     private LocalDateTime createdAt;
-
-    @ManyToOne
     private User reviewer;
-
-    @ManyToOne
     private User reviewee;
 }

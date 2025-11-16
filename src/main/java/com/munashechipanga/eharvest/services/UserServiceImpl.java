@@ -35,16 +35,21 @@ public class UserServiceImpl implements UserService {
                 Farmer farmer = new Farmer();
                 farmer.setFarmName(dto.getFarmName());
                 farmer.setFarmLocation(dto.getFarmLocation());
+                farmer.setUnsuccessfulSales(dto.getUnsuccessfulSales());
+                farmer.setSuccessfulSales(dto.getSuccessfulSales());
                 user = farmer;
                 break;
             case "BUYER":
                 Buyer buyer = new Buyer();
                 buyer.setCompanyName(dto.getCompanyName());
+                buyer.setSuccessfulBuys(dto.getSuccessfulBuys());
+                buyer.setUnsuccessfulBuys(dto.getUnsuccessfulBuys());
                 user = buyer;
                 break;
             case "LOGISTICS":
                 LogisticsProvider lp = new LogisticsProvider();
                 lp.setLicenseNumber(dto.getLicenseNumber());
+                lp.setDefensiveId(dto.getDefensiveId());
                 user = lp;
                 break;
             default:
@@ -62,6 +67,7 @@ public class UserServiceImpl implements UserService {
         user.setVerified(false);
         user.setTrustScore(0);
         user.setActive(true);
+        user.setRole(dto.getRole());
 
         User saved = userRepository.save(user);
         return mapToResponse(saved);

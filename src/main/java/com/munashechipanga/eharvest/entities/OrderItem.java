@@ -10,8 +10,8 @@ import lombok.Setter;
 public class OrderItem {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private double price;
-    private int quantity;
+    private Double price;
+    private Integer quantity;
 
     @ManyToOne
     private Produce produce;
