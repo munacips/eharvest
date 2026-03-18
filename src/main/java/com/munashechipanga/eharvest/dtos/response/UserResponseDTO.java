@@ -33,4 +33,7 @@ public class UserResponseDTO {
     private String licenseNumber;
     private String defensiveId;
 
+    private Double usdBalance;
+    private Double zigBalance;
+
 }

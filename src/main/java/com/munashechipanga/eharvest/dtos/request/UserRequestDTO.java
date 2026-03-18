@@ -35,4 +35,8 @@ public class UserRequestDTO {
     // For Logistics Provider
     private String licenseNumber;
     private String defensiveId;
+
+    //escrow
+    private Double usdBalance;
+    private Double zigBalance;
 }

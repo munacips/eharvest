@@ -65,6 +65,20 @@ public class ReviewServiceImpl implements ReviewService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<ReviewDto> getReviewsByReviewerId(Long reviewerId) {
+        return repository.findByReviewer_Id(reviewerId).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ReviewDto> getReviewsByRevieweeId(Long revieweeId) {
+        return repository.findByReviewee_Id(revieweeId).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
     public ReviewDto mapToDto(Review review) {
         ReviewDto dto = new ReviewDto();
 

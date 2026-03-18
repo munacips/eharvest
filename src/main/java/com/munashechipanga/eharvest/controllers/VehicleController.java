@@ -1,8 +1,14 @@
 package com.munashechipanga.eharvest.controllers;
 
 import com.munashechipanga.eharvest.dtos.VehicleDto;
+import com.munashechipanga.eharvest.dtos.VehicleFilter;
 import com.munashechipanga.eharvest.services.VehicleService;
+import com.munashechipanga.eharvest.utils.PagingUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,8 +27,27 @@ public class VehicleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<VehicleDto>> getAllVehicles() {
-        return ResponseEntity.ok(vehicleService.getAllVehicles());
+    public ResponseEntity<Page<VehicleDto>> search(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String colour,
+            @RequestParam(required = false) String plateNumber,
+            @RequestParam(required = false) Long ownerId,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id,desc") String sort
+    ) {
+        Sort sortSpec = PagingUtils.parseSort(sort);
+        Pageable pageable = PageRequest.of(page, size, sortSpec);
+
+        VehicleFilter filter = new VehicleFilter();
+        filter.setType(type);
+        filter.setColour(colour);
+        filter.setPlateNumber(plateNumber);
+        filter.setOwnerId(ownerId);
+        filter.setSearch(search);
+
+        return ResponseEntity.ok(vehicleService.search(filter, pageable));
     }
 
     @PutMapping("{id}")
@@ -37,7 +62,13 @@ public class VehicleController {
     }
 
     @PostMapping
-    public ResponseEntity<VehicleDto> createVehicle(VehicleDto dto) {
+    public ResponseEntity<VehicleDto> createVehicle(@RequestBody VehicleDto dto) {
         return ResponseEntity.ok(vehicleService.createVehicle(dto));
     }
 }
+
+
+//POST /api/v1/vehicles/{vehicleId}/images
+//Body: { "imageUrl": "https://..." }
+//
+//DELETE /api/v1/vehicles/{vehicleId}/images/{imageId}

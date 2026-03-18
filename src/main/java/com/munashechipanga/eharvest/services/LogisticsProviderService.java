@@ -1,6 +1,5 @@
 package com.munashechipanga.eharvest.services;
 
-import com.munashechipanga.eharvest.dtos.BuyerDto;
 import com.munashechipanga.eharvest.dtos.LogisticsProviderDto;
 import com.munashechipanga.eharvest.dtos.response.UserResponseDTO;
 

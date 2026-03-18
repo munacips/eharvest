@@ -6,13 +6,15 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Getter
 @Setter
 public class Produce {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private String category;
@@ -25,5 +27,8 @@ public class Produce {
 
     @ManyToOne
     private Farmer farmer;
+
+    @OneToMany(mappedBy = "produce", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProduceImage> images = new ArrayList<>();
 
 }

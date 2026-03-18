@@ -2,11 +2,14 @@ package com.munashechipanga.eharvest.services;
 
 import com.munashechipanga.eharvest.dtos.FarmerDto;
 import com.munashechipanga.eharvest.dtos.response.UserResponseDTO;
-import com.munashechipanga.eharvest.entities.Buyer;
+import com.munashechipanga.eharvest.dtos.FarmerFilter;
 import com.munashechipanga.eharvest.entities.Farmer;
 import com.munashechipanga.eharvest.exceptions.ResourceNotFoundException;
 import com.munashechipanga.eharvest.repositories.FarmerRepository;
+import com.munashechipanga.eharvest.specs.FarmerSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -98,6 +101,12 @@ public class FarmerServiceImpl implements  FarmerService {
         return farmerRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<UserResponseDTO> search(FarmerFilter filter, Pageable pageable) {
+        return farmerRepository.findAll(FarmerSpecifications.withFilters(filter), pageable)
+                .map(this::mapToResponse);
     }
 
     private UserResponseDTO mapToResponse(Farmer user) {

@@ -29,4 +29,8 @@ public class User {
     private Boolean active;
     private Boolean verified;
     private Integer trustScore;
+
+    //escrow
+    private Double usdBalance;
+    private Double zigBalance;
 }

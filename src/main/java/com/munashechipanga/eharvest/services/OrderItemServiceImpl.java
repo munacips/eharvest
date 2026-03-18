@@ -1,9 +1,14 @@
 package com.munashechipanga.eharvest.services;
 
 import com.munashechipanga.eharvest.dtos.OrderItemDto;
+import com.munashechipanga.eharvest.dtos.response.OrderItemResponseDTO;
+import com.munashechipanga.eharvest.entities.Order;
 import com.munashechipanga.eharvest.entities.OrderItem;
+import com.munashechipanga.eharvest.entities.Produce;
 import com.munashechipanga.eharvest.exceptions.ResourceNotFoundException;
 import com.munashechipanga.eharvest.repositories.OrderItemRepository;
+import com.munashechipanga.eharvest.repositories.OrderRepository;
+import com.munashechipanga.eharvest.repositories.ProduceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,41 +20,63 @@ public class OrderItemServiceImpl implements OrderItemService {
 
     @Autowired
     OrderItemRepository repository;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private ProduceRepository produceRepository;
 
     @Override
-    public OrderItemDto getOrderItemById(Long id) {
+    public OrderItemResponseDTO getOrderItemById(Long id) {
         OrderItem orderItem = repository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Order Item not found"));
         return mapToDto(orderItem);
     }
 
     @Override
-    public List<OrderItemDto> getAllOrders() {
+    public List<OrderItemResponseDTO> getAllOrders() {
         return repository.findAll().stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public OrderItemDto createOrderItem(OrderItemDto orderItemDto) {
+    public OrderItemResponseDTO createOrderItem(OrderItemDto orderItemDto) {
         OrderItem orderItem = new OrderItem();
 
         orderItem.setPrice(orderItemDto.getPrice());
         orderItem.setQuantity(orderItemDto.getQuantity());
-        orderItem.setProduce(orderItemDto.getProduce());
-        orderItem.setOrder(orderItemDto.getOrder());
+
+        if(orderItemDto.getProduce() != null){
+            Produce produce = produceRepository.findById(orderItemDto.getProduce())
+                    .orElseThrow(()-> new ResourceNotFoundException("Produce not found"));
+            orderItem.setProduce(produce);
+        }
+
+        if(orderItemDto.getOrder() != null) {
+            Order order = orderRepository.findById(orderItemDto.getOrder())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderItemDto.getOrder()));
+            orderItem.setOrder(order);
+        }
 
         repository.save(orderItem);
         return mapToDto(orderItem);
     }
 
     @Override
-    public OrderItemDto updateOrderItem(Long id, OrderItemDto dto) {
+    public OrderItemResponseDTO updateOrderItem(Long id, OrderItemDto dto) {
         OrderItem orderItem = repository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Order Item not found"));
 
-        if(dto.getOrder() != null) orderItem.setOrder(dto.getOrder());
-        if(dto.getProduce() != null) orderItem.setProduce(dto.getProduce());
+        if(dto.getOrder() != null) {
+            Order order = orderRepository.findById(dto.getOrder())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + dto.getOrder()));
+            orderItem.setOrder(order);
+        };
+        if(dto.getProduce() != null) {
+            Produce produce = produceRepository.findById(dto.getProduce())
+                    .orElseThrow(()-> new ResourceNotFoundException("Produce not found"));
+            orderItem.setProduce(produce);
+        };
         if(dto.getQuantity() != null) orderItem.setQuantity(dto.getQuantity());
         if(dto.getPrice() != null) orderItem.setPrice(dto.getPrice());
 
@@ -62,8 +89,16 @@ public class OrderItemServiceImpl implements OrderItemService {
         repository.deleteById(id);
     }
 
-    private OrderItemDto mapToDto(OrderItem orderItem) {
-        OrderItemDto orderItemDto = new OrderItemDto();
+    @Override
+    public List<OrderItemResponseDTO> getOrderItemsByOrderId(Long orderId) {
+        return repository.findByOrder_Id(orderId).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    private OrderItemResponseDTO mapToDto(OrderItem orderItem) {
+        //OrderItemDto orderItemDto = new OrderItemDto();
+        OrderItemResponseDTO orderItemDto = new OrderItemResponseDTO();
 
         orderItemDto.setId(orderItem.getId());
         orderItemDto.setQuantity(orderItem.getQuantity());

@@ -15,10 +15,13 @@ public class Order {
     private Long id;
     private LocalDateTime orderDate;
     private Double totalAmount;
-    private String status; // PENDING, CONFIRMED, IN_TRANSIT, DELIVERED
+    private String status; // PENDING, CONFIRMED, IN_TRANSIT, DELIVERED, REJECTED
 
     @ManyToOne
     private Buyer buyer;
+
+    @ManyToOne
+    private Farmer farmer;
 
     @OneToOne
     private LogisticsRequest logisticsRequest;

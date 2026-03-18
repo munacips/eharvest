@@ -2,10 +2,14 @@ package com.munashechipanga.eharvest.services;
 
 import com.munashechipanga.eharvest.dtos.BuyerDto;
 import com.munashechipanga.eharvest.dtos.response.UserResponseDTO;
+import com.munashechipanga.eharvest.dtos.BuyerFilter;
 import com.munashechipanga.eharvest.entities.Buyer;
 import com.munashechipanga.eharvest.exceptions.ResourceNotFoundException;
 import com.munashechipanga.eharvest.repositories.BuyerRepository;
+import com.munashechipanga.eharvest.specs.BuyerSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -96,6 +100,11 @@ public class BuyerServiceImpl implements BuyerService {
         return buyerRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    public Page<UserResponseDTO> search(BuyerFilter filter, Pageable pageable) {
+        return buyerRepository.findAll(BuyerSpecifications.withFilters(filter), pageable)
+                .map(this::mapToResponse);
     }
 
     private UserResponseDTO mapToResponse(Buyer user) {

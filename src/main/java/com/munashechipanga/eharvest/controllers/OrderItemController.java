@@ -1,6 +1,7 @@
 package com.munashechipanga.eharvest.controllers;
 
 import com.munashechipanga.eharvest.dtos.OrderItemDto;
+import com.munashechipanga.eharvest.dtos.response.OrderItemResponseDTO;
 import com.munashechipanga.eharvest.services.OrderItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,7 @@ public class OrderItemController {
     private OrderItemService orderItemService;
 
     @PostMapping
-    public ResponseEntity<OrderItemDto> saveOrderItem(OrderItemDto dto){
+    public ResponseEntity<OrderItemResponseDTO> saveOrderItem(@RequestBody OrderItemDto dto){
         return ResponseEntity.ok(orderItemService.createOrderItem(dto));
     }
 
@@ -27,17 +28,22 @@ public class OrderItemController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<OrderItemDto> updateOrderItem(@PathVariable Long id, @RequestBody OrderItemDto dto){
+    public ResponseEntity<OrderItemResponseDTO> updateOrderItem(@PathVariable Long id, @RequestBody OrderItemDto dto){
         return ResponseEntity.ok(orderItemService.updateOrderItem(id, dto));
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<OrderItemDto> getOrderItemById(@PathVariable Long id){
+    public ResponseEntity<OrderItemResponseDTO> getOrderItemById(@PathVariable Long id){
         return ResponseEntity.ok(orderItemService.getOrderItemById(id));
     }
 
+    @GetMapping("/order/{id}")
+    public ResponseEntity<List<OrderItemResponseDTO>> getOrderItemsByOrderId(@PathVariable Long id){
+        return ResponseEntity.ok(orderItemService.getOrderItemsByOrderId(id));
+    }
+
     @GetMapping
-    public ResponseEntity<List<OrderItemDto>> getAllOrderItems(){
+    public ResponseEntity<List<OrderItemResponseDTO>> getAllOrderItems(){
         return ResponseEntity.ok(orderItemService.getAllOrders());
     }
 }

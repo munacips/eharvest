@@ -9,6 +9,9 @@ import com.munashechipanga.eharvest.entities.User;
 import com.munashechipanga.eharvest.exceptions.ResourceNotFoundException;
 import com.munashechipanga.eharvest.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
@@ -68,6 +71,8 @@ public class UserServiceImpl implements UserService {
         user.setTrustScore(0);
         user.setActive(true);
         user.setRole(dto.getRole());
+        user.setUsdBalance(0.00);
+        user.setZigBalance(0.00);
 
         User saved = userRepository.save(user);
         return mapToResponse(saved);
@@ -90,6 +95,8 @@ public class UserServiceImpl implements UserService {
         if (dto.getVerified() != null) user.setVerified(dto.getVerified());
         if (dto.getTrustScore() != null) user.setTrustScore(dto.getTrustScore());
         if (dto.getActive() != null) user.setActive(dto.getActive());
+        if (dto.getUsdBalance() != null) user.setUsdBalance(dto.getUsdBalance());
+        if (dto.getZigBalance() != null) user.setZigBalance(dto.getZigBalance());
 
         if (user instanceof Farmer) {
             Farmer f = (Farmer) user;
@@ -144,23 +151,50 @@ public class UserServiceImpl implements UserService {
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setVerified(user.getVerified());
         dto.setTrustScore(user.getTrustScore());
+        dto.setUsdBalance(user.getUsdBalance());
+        dto.setZigBalance(user.getZigBalance());
 
-        if (user instanceof Farmer) {
-            dto.setRole("FARMER");
-            dto.setFarmName(((Farmer) user).getFarmName());
-            dto.setFarmLocation(((Farmer) user).getFarmLocation());
-            dto.setSuccessfulBuys(((Farmer) user).getSuccessfulSales());
-            dto.setUnsuccessfulSales(((Farmer) user).getUnsuccessfulSales());
-        } else if (user instanceof Buyer) {
-            dto.setRole("BUYER");
-            dto.setCompanyName(((Buyer) user).getCompanyName());
-            dto.setSuccessfulBuys(((Buyer) user).getSuccessfulBuys());
-            dto.setUnsuccessfulBuys(((Buyer) user).getUnsuccessfulBuys());
-        } else if (user instanceof LogisticsProvider) {
-            dto.setRole("LOGISTICS");
-            dto.setLicenseNumber(((LogisticsProvider) user).getLicenseNumber());
+        switch (user) {
+            case Farmer farmer -> {
+                dto.setRole("FARMER");
+                dto.setFarmName(farmer.getFarmName());
+                dto.setFarmLocation(farmer.getFarmLocation());
+                dto.setSuccessfulBuys(farmer.getSuccessfulSales());
+                dto.setUnsuccessfulSales(farmer.getUnsuccessfulSales());
+            }
+            case Buyer buyer -> {
+                dto.setRole("BUYER");
+                dto.setCompanyName(buyer.getCompanyName());
+                dto.setSuccessfulBuys(buyer.getSuccessfulBuys());
+                dto.setUnsuccessfulBuys(buyer.getUnsuccessfulBuys());
+            }
+            case LogisticsProvider provider -> {
+                dto.setRole("LOGISTICS");
+                dto.setLicenseNumber(provider.getLicenseNumber());
+            }
+            default -> {
+            }
         }
 
         return dto;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        // Map your DB role to Spring Security role
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getUsername())
+                .password(user.getPassword())             // already hashed by BCrypt
+                .roles(user.getRole().toUpperCase())      // FARMER -> ROLE_FARMER internally
+                .build();
+    }
+
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 }

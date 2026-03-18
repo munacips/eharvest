@@ -1,6 +1,7 @@
 package com.munashechipanga.eharvest.controllers;
 
 import com.munashechipanga.eharvest.dtos.LogisticsRequestDto;
+import com.munashechipanga.eharvest.dtos.request.LogisticsRequestCreateDTO;
 import com.munashechipanga.eharvest.services.LogisticsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,13 +26,18 @@ public class LogisticsController {
         return ResponseEntity.ok(logisticsService.getLogisticsRequestById(id));
     }
 
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<LogisticsRequestDto> getLogisticsRequestByOrderId(@PathVariable Long orderId) {
+        return ResponseEntity.ok(logisticsService.getLogisticsRequestByOrderId(orderId));
+    }
+
     @PostMapping
-    public ResponseEntity<LogisticsRequestDto>  createLogisticsRequest(@RequestBody LogisticsRequestDto logisticsRequestDto) {
+    public ResponseEntity<LogisticsRequestDto>  createLogisticsRequest(@RequestBody LogisticsRequestCreateDTO logisticsRequestDto) {
         return ResponseEntity.ok(logisticsService.createLogisticsRequest(logisticsRequestDto));
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<LogisticsRequestDto> updateLogisticsRequest(@PathVariable Long id, @RequestBody LogisticsRequestDto logisticsRequestDto) {
+    public ResponseEntity<LogisticsRequestDto> updateLogisticsRequest(@PathVariable Long id, @RequestBody LogisticsRequestCreateDTO logisticsRequestDto) {
         return ResponseEntity.ok(logisticsService.updateLogisticsRequest(id, logisticsRequestDto));
     }
 

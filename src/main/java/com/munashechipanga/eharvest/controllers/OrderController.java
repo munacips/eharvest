@@ -25,13 +25,23 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrders());
     }
 
+    @GetMapping("/farmer/{farmerId}")
+    public ResponseEntity<List<OrderResponseDTO>> getOrdersByFarmer(@PathVariable Long farmerId){
+        return ResponseEntity.ok(orderService.getOrdersByFarmerId(farmerId));
+    }
+
+    @GetMapping("/buyer/{buyerId}")
+    public ResponseEntity<List<OrderResponseDTO>> getOrdersByBuyer(@PathVariable Long buyerId){
+        return ResponseEntity.ok(orderService.getOrdersByBuyerId(buyerId));
+    }
+
     @PostMapping
     public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody CreateOrderDTO dto){
         return ResponseEntity.ok(orderService.createOrder(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<OrderResponseDTO> updateOrder(@PathVariable Long id, @RequestBody OrderResponseDTO dto){
+    public ResponseEntity<OrderResponseDTO> updateOrder(@PathVariable Long id, @RequestBody CreateOrderDTO dto){
         return ResponseEntity.ok(orderService.updateOrder(id,dto));
     }
 

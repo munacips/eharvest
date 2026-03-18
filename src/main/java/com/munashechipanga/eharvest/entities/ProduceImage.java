@@ -1,8 +1,12 @@
 package com.munashechipanga.eharvest.entities;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
 public class ProduceImage {
 
     @Id
@@ -10,6 +14,6 @@ public class ProduceImage {
     private Long id;
     private String imageUrl;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Produce produce;
 }

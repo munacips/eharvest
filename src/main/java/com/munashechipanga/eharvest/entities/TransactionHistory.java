@@ -13,9 +13,19 @@ public class TransactionHistory {
     @Id  @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private LocalDateTime transactionDate;
-    private double price;
-    private double quantity;
+    private Double amount;
+    private String status;
+    private String transactionReference;
 
     @ManyToOne
-    private Produce produce;
+    @JoinColumn(name = "buyer_id")
+    private Buyer buyer;
+
+    @ManyToOne
+    @JoinColumn(name = "farmer_id")
+    private Farmer farmer;
+
+    @OneToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
 }

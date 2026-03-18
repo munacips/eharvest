@@ -10,6 +10,6 @@ import lombok.Setter;
 public class Farmer extends User {
     private String farmName;
     private String farmLocation;
-    private int successfulSales;
-    private int unsuccessfulSales;
+    private Integer successfulSales;
+    private Integer unsuccessfulSales;
 }
