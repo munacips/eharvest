@@ -2,8 +2,15 @@ package com.munashechipanga.eharvest.services;
 
 import com.munashechipanga.eharvest.dtos.ReviewDto;
 import com.munashechipanga.eharvest.entities.Review;
+import com.munashechipanga.eharvest.entities.User;
+import com.munashechipanga.eharvest.entities.LogisticsProvider;
+import com.munashechipanga.eharvest.entities.Buyer;
+import com.munashechipanga.eharvest.entities.Farmer;
 import com.munashechipanga.eharvest.exceptions.ResourceNotFoundException;
 import com.munashechipanga.eharvest.repositories.ReviewRepository;
+import com.munashechipanga.eharvest.repositories.OrderRepository;
+import com.munashechipanga.eharvest.repositories.UserRepository;
+import com.munashechipanga.eharvest.enums.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,17 +23,25 @@ public class ReviewServiceImpl implements ReviewService {
     @Autowired
     ReviewRepository repository;
 
+    @Autowired
+    OrderRepository orderRepository;
+
+    @Autowired
+    UserRepository userRepository;
+
     @Override
     public ReviewDto createReview(ReviewDto dto) {
+        validateReview(dto);
         Review review = new Review();
 
         review.setRating(dto.getRating());
         review.setReviewer(dto.getReviewer());
-        review.setCreatedAt(dto.getCreatedAt());
+        review.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : java.time.LocalDateTime.now());
         review.setReviewee(dto.getReviewee());
         review.setComment(dto.getComment());
 
         Review savedReview = repository.save(review);
+        updateTrustScore(savedReview.getReviewee());
         return mapToDto(savedReview);
     }
 
@@ -42,6 +57,7 @@ public class ReviewServiceImpl implements ReviewService {
         if(dto.getRating() != null) review.setRating(dto.getRating());
 
         Review savedReview = repository.save(review);
+        updateTrustScore(savedReview.getReviewee());
         return mapToDto(savedReview);
     }
 
@@ -90,5 +106,39 @@ public class ReviewServiceImpl implements ReviewService {
         dto.setCreatedAt(review.getCreatedAt());
 
         return dto;
+    }
+
+    private void validateReview(ReviewDto dto) {
+        if (dto.getReviewer() == null || dto.getReviewee() == null) {
+            throw new IllegalArgumentException("Reviewer and reviewee are required");
+        }
+
+        User reviewer = dto.getReviewer();
+        User reviewee = dto.getReviewee();
+
+        boolean canReview = false;
+        if ((reviewer instanceof Buyer || reviewer instanceof Farmer) &&
+                (reviewee instanceof Buyer || reviewee instanceof Farmer)) {
+            canReview = orderRepository.existsDeliveredBetweenBuyerFarmer(
+                    reviewer.getId(), reviewee.getId(), OrderStatus.DELIVERED.name());
+        } else if (reviewee instanceof LogisticsProvider) {
+            canReview = orderRepository.existsDeliveredWithProvider(
+                    reviewer.getId(), reviewee.getId(), OrderStatus.DELIVERED.name());
+        } else if (reviewer instanceof LogisticsProvider) {
+            canReview = orderRepository.existsDeliveredWithProvider(
+                    reviewee.getId(), reviewer.getId(), OrderStatus.DELIVERED.name());
+        }
+
+        if (!canReview) {
+            throw new IllegalArgumentException("No completed delivery between reviewer and reviewee");
+        }
+    }
+
+    private void updateTrustScore(User user) {
+        if (user == null) return;
+        Double avg = repository.findAverageRatingForUser(user.getId());
+        if (avg == null) return;
+        user.setTrustScore((int) Math.round(avg));
+        userRepository.save(user);
     }
 }

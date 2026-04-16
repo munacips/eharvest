@@ -45,6 +45,31 @@ public class OrderController {
         return ResponseEntity.ok(orderService.updateOrder(id,dto));
     }
 
+    @PostMapping("/{id}/accept")
+    public ResponseEntity<OrderResponseDTO> acceptOrder(@PathVariable Long id){
+        return ResponseEntity.ok(orderService.acceptOrder(id));
+    }
+
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<OrderResponseDTO> rejectOrder(@PathVariable Long id, @RequestParam(required = false) String reason){
+        return ResponseEntity.ok(orderService.rejectOrder(id, reason));
+    }
+
+    @PostMapping("/{id}/hold-escrow")
+    public ResponseEntity<OrderResponseDTO> holdEscrow(@PathVariable Long id){
+        return ResponseEntity.ok(orderService.holdEscrow(id));
+    }
+
+    @PostMapping("/{id}/delivery-started")
+    public ResponseEntity<OrderResponseDTO> confirmDeliveryStarted(@PathVariable Long id){
+        return ResponseEntity.ok(orderService.confirmDeliveryStarted(id));
+    }
+
+    @PostMapping("/{id}/delivery-confirmed")
+    public ResponseEntity<OrderResponseDTO> confirmDelivery(@PathVariable Long id){
+        return ResponseEntity.ok(orderService.confirmDelivery(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<OrderResponseDTO> deleteOrder(@PathVariable Long id){
         orderService.deleteOrder(id);

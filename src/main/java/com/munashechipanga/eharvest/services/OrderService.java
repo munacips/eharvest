@@ -13,4 +13,10 @@ public interface OrderService {
     List<OrderResponseDTO> getOrders();
     List<OrderResponseDTO> getOrdersByFarmerId(Long farmerId);
     List<OrderResponseDTO> getOrdersByBuyerId(Long buyerId);
+
+    OrderResponseDTO acceptOrder(Long id);
+    OrderResponseDTO rejectOrder(Long id, String reason);
+    OrderResponseDTO holdEscrow(Long id);
+    OrderResponseDTO confirmDeliveryStarted(Long id);
+    OrderResponseDTO confirmDelivery(Long id);
 }

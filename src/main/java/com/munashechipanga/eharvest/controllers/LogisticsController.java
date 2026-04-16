@@ -46,4 +46,24 @@ public class LogisticsController {
         logisticsService.deleteLogisticsRequest(id);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("{id}/accept")
+    public ResponseEntity<LogisticsRequestDto> acceptRequest(@PathVariable Long id, @RequestParam Long providerId) {
+        return ResponseEntity.ok(logisticsService.acceptRequest(id, providerId));
+    }
+
+    @PostMapping("{id}/reject")
+    public ResponseEntity<LogisticsRequestDto> rejectRequest(@PathVariable Long id, @RequestParam Long providerId) {
+        return ResponseEntity.ok(logisticsService.rejectRequest(id, providerId));
+    }
+
+    @PostMapping("{id}/in-transit")
+    public ResponseEntity<LogisticsRequestDto> markInTransit(@PathVariable Long id) {
+        return ResponseEntity.ok(logisticsService.markInTransit(id));
+    }
+
+    @PostMapping("{id}/delivered")
+    public ResponseEntity<LogisticsRequestDto> markDelivered(@PathVariable Long id) {
+        return ResponseEntity.ok(logisticsService.markDelivered(id));
+    }
 }

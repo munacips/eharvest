@@ -16,4 +16,6 @@ public interface ProduceService {
     List<ProduceDto> getAllProduce();
 
     Page<ProduceDto> search(ProduceFilter filter, Pageable pageable);
+
+    ProduceDto addProduceImages(Long id, List<String> imageUrls);
 }

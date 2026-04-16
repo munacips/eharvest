@@ -96,6 +96,22 @@ public class ProduceServiceImpl implements ProduceService {
                 .map(this::mapToDto);
     }
 
+    @Override
+    public ProduceDto addProduceImages(Long id, List<String> imageUrls) {
+        Produce produce = produceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produce not found"));
+        if (imageUrls != null) {
+            for (String url : imageUrls) {
+                ProduceImage pi = new ProduceImage();
+                pi.setImageUrl(url);
+                pi.setProduce(produce);
+                produce.getImages().add(pi);
+            }
+        }
+        Produce saved = produceRepository.save(produce);
+        return mapToDto(saved);
+    }
+
     private ProduceDto mapToDto(Produce produce) {
          ProduceDto dto = new ProduceDto();
          dto.setCategory(produce.getCategory());

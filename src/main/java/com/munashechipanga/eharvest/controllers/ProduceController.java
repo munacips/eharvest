@@ -5,6 +5,7 @@ import com.munashechipanga.eharvest.dtos.ProduceFilter;
 import com.munashechipanga.eharvest.dtos.request.CreateProduceDTO;
 import com.munashechipanga.eharvest.dtos.response.ProduceResponseDTO;
 import com.munashechipanga.eharvest.services.ProduceService;
+import com.munashechipanga.eharvest.services.FileStorageService;
 import com.munashechipanga.eharvest.utils.PagingUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,6 +25,9 @@ import java.util.List;
 public class ProduceController {
     @Autowired
     private ProduceService produceService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @GetMapping("{id}")
     public ResponseEntity<ProduceDto> getProduceById(@PathVariable long id){
@@ -73,6 +78,18 @@ public class ProduceController {
     public ResponseEntity<ProduceDto> deleteProduce(@PathVariable Long id){
         produceService.deleteProduce(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/images")
+    public ResponseEntity<List<String>> uploadImages(@RequestParam("files") List<MultipartFile> files) {
+        return ResponseEntity.ok(fileStorageService.storeAll(files));
+    }
+
+    @PostMapping("{id}/images")
+    public ResponseEntity<ProduceDto> uploadAndAttachImages(@PathVariable Long id,
+                                                            @RequestParam("files") List<MultipartFile> files) {
+        List<String> urls = fileStorageService.storeAll(files);
+        return ResponseEntity.ok(produceService.addProduceImages(id, urls));
     }
 }
 

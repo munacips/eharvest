@@ -13,4 +13,9 @@ public interface LogisticsService {
     List<LogisticsRequestDto> getAllLogisticsProviders();
     LogisticsRequestDto getLogisticsRequestByOrderId(Long id);
 
+    LogisticsRequestDto acceptRequest(Long requestId, Long providerId);
+    LogisticsRequestDto rejectRequest(Long requestId, Long providerId);
+    LogisticsRequestDto markInTransit(Long requestId);
+    LogisticsRequestDto markDelivered(Long requestId);
+
 }

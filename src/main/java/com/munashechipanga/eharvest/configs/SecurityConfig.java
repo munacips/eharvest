@@ -38,7 +38,8 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/buyers").permitAll() // public registration
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/farmers").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/logistics-providers").permitAll()
-                        .requestMatchers("/users/**").hasRole("ADMIN") // if you ever need admin
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
                         .requestMatchers("/farmer/**").hasRole("FARMER")
                         .requestMatchers("/buyer/**").hasRole("BUYER")
                         .requestMatchers("/logistics/**").hasRole("LOGISTICS")

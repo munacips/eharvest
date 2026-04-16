@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import com.munashechipanga.eharvest.enums.Currency;
 
 @Entity
 @Table(name = "orders")
@@ -16,6 +17,10 @@ public class Order {
     private LocalDateTime orderDate;
     private Double totalAmount;
     private String status; // PENDING, CONFIRMED, IN_TRANSIT, DELIVERED, REJECTED
+    @Enumerated(EnumType.STRING)
+    private Currency currency;
+    private Boolean escrowHeld;
+    private Double escrowAmount;
 
     @ManyToOne
     private Buyer buyer;

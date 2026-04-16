@@ -1,0 +1,3 @@
+Wire real Paynow API calls (instead of stub) and webhook signature verification.
+Implement Firebase Cloud Messaging (FCM) for real push notifications.
+Add stricter role checks and method‑level security (e.g., only buyer can confirm delivery, only farmer can accept orders).

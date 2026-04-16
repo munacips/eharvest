@@ -4,6 +4,8 @@ import com.munashechipanga.eharvest.dtos.TransactionDto;
 import com.munashechipanga.eharvest.entities.TransactionHistory;
 import com.munashechipanga.eharvest.exceptions.ResourceNotFoundException;
 import com.munashechipanga.eharvest.repositories.TransactionRepository;
+import com.munashechipanga.eharvest.enums.Currency;
+import com.munashechipanga.eharvest.enums.TransactionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +35,11 @@ public class TransactionServiceImpl implements TransactionService{
         transaction.setAmount(dto.getAmount());
         transaction.setStatus("INITIATED");
         transaction.setOrder(dto.getOrder());
+        transaction.setCurrency(dto.getCurrency());
+        transaction.setType(dto.getType());
+        transaction.setProvider(dto.getProvider());
+        transaction.setProviderReference(dto.getProviderReference());
+        transaction.setUser(dto.getUser());
 
         TransactionHistory txn =  repository.save(transaction);
 
@@ -57,6 +64,11 @@ public class TransactionServiceImpl implements TransactionService{
         if(dto.getFarmer() != null) txn.setFarmer(dto.getFarmer());
         if(dto.getTransactionDate() != null) txn.setTransactionDate(dto.getTransactionDate());
         if(dto.getTransactionReference() != null) txn.setTransactionReference(dto.getTransactionReference());
+        if(dto.getCurrency() != null) txn.setCurrency(dto.getCurrency());
+        if(dto.getType() != null) txn.setType(dto.getType());
+        if(dto.getProvider() != null) txn.setProvider(dto.getProvider());
+        if(dto.getProviderReference() != null) txn.setProviderReference(dto.getProviderReference());
+        if(dto.getUser() != null) txn.setUser(dto.getUser());
 
         TransactionHistory updatedTxn = repository.save(txn);
         return mapToResponse(updatedTxn);
@@ -92,6 +104,11 @@ public class TransactionServiceImpl implements TransactionService{
         dto.setId(txn.getId());
         dto.setAmount(txn.getAmount());
         dto.setStatus(txn.getStatus());
+        dto.setCurrency(txn.getCurrency());
+        dto.setType(txn.getType());
+        dto.setProvider(txn.getProvider());
+        dto.setProviderReference(txn.getProviderReference());
+        dto.setUser(txn.getUser());
         return dto;
     }
 
