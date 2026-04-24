@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class LogisticsProviderServiceImpl implements LogisticsProviderService{
+public class LogisticsProviderServiceImpl implements LogisticsProviderService {
 
     @Autowired
     LogisticsProviderRepository repository;
@@ -21,18 +21,29 @@ public class LogisticsProviderServiceImpl implements LogisticsProviderService{
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private TrustScoreClient trustScoreClient;
 
     @Override
     public UserResponseDTO getLogisticsProviderById(Long id) {
         LogisticsProvider provider = repository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Provider not found"));
-        return mapToResponse(provider);
+                .orElseThrow(() -> new ResourceNotFoundException("Provider not found"));
+
+        Integer latestTrustScore = trustScoreClient.fetchTrustScore(provider.getId());
+        provider.setTrustScore(latestTrustScore);
+
+        LogisticsProvider updatedProvider = repository.save(provider);
+        return mapToResponse(updatedProvider);
     }
 
     @Override
     public UserResponseDTO createLogisticsProvider(LogisticsProviderDto dto) {
 
         LogisticsProvider provider = new LogisticsProvider();
+
+        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password is required");
+        }
 
         String password = passwordEncoder.encode(dto.getPassword());
 
@@ -50,7 +61,7 @@ public class LogisticsProviderServiceImpl implements LogisticsProviderService{
         provider.setActive(dto.getActive());
         provider.setVerified(dto.getVerified());
         provider.setTrustScore(dto.getTrustScore());
-        provider.setLicenseNumber(provider.getLicenseNumber());
+        provider.setLicenseNumber(dto.getLicenseNumber());
         provider.setDefensiveId(dto.getDefensiveId());
 
         LogisticsProvider newProvider = repository.save(provider);
@@ -62,26 +73,38 @@ public class LogisticsProviderServiceImpl implements LogisticsProviderService{
     @Override
     public UserResponseDTO updateLogisticsProvider(Long id, LogisticsProviderDto dto) {
         LogisticsProvider provider = repository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Provider not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Provider not found"));
 
-        if (dto.getFirstName() != null) provider.setFirstName(dto.getFirstName());
-        if (dto.getPhoneNumber() != null) provider.setPhoneNumber(dto.getPhoneNumber());
-        if (dto.getActive() != null) provider.setActive(dto.getActive());
-        if (dto.getVerified() != null) provider.setVerified(dto.getVerified());
-        if (dto.getTrustScore() != null) provider.setTrustScore(dto.getTrustScore());
-        if(dto.getDefensiveId() != null) provider.setDefensiveId(dto.getDefensiveId());
-        if(dto.getLicenseNumber() != null) provider.setLicenseNumber(dto.getLicenseNumber());
-        if (dto.getLastName() != null) provider.setLastName(dto.getLastName());
-        if (dto.getAddress() != null) provider.setAddress(dto.getAddress());
-        if (dto.getEmail() != null) provider.setEmail(dto.getEmail());
-        if (dto.getUsername() != null) provider.setUsername(dto.getUsername());
-        if (dto.getNationalId() != null) provider.setNationalId(dto.getNationalId());
-        if (dto.getRole() != null) provider.setRole(dto.getRole());
+        if (dto.getFirstName() != null)
+            provider.setFirstName(dto.getFirstName());
+        if (dto.getPhoneNumber() != null)
+            provider.setPhoneNumber(dto.getPhoneNumber());
+        if (dto.getActive() != null)
+            provider.setActive(dto.getActive());
+        if (dto.getVerified() != null)
+            provider.setVerified(dto.getVerified());
+        if (dto.getTrustScore() != null)
+            provider.setTrustScore(dto.getTrustScore());
+        if (dto.getDefensiveId() != null)
+            provider.setDefensiveId(dto.getDefensiveId());
+        if (dto.getLicenseNumber() != null)
+            provider.setLicenseNumber(dto.getLicenseNumber());
+        if (dto.getLastName() != null)
+            provider.setLastName(dto.getLastName());
+        if (dto.getAddress() != null)
+            provider.setAddress(dto.getAddress());
+        if (dto.getEmail() != null)
+            provider.setEmail(dto.getEmail());
+        if (dto.getUsername() != null)
+            provider.setUsername(dto.getUsername());
+        if (dto.getNationalId() != null)
+            provider.setNationalId(dto.getNationalId());
+        if (dto.getRole() != null)
+            provider.setRole(dto.getRole());
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             String encodedPassword = passwordEncoder.encode(dto.getPassword());
             provider.setPassword(encodedPassword);
         }
-
 
         return mapToResponse(repository.save(provider));
     }

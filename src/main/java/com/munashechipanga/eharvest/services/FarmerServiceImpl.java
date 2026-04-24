@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class FarmerServiceImpl implements  FarmerService {
+public class FarmerServiceImpl implements FarmerService {
 
     @Autowired
     FarmerRepository farmerRepository;
@@ -25,11 +25,19 @@ public class FarmerServiceImpl implements  FarmerService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private TrustScoreClient trustScoreClient;
+
     @Override
     public UserResponseDTO getFarmerById(Long id) {
         Farmer farmer = farmerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Farmer not found"));
-        return mapToResponse(farmer);
+
+        Integer latestTrustScore = trustScoreClient.fetchTrustScore(farmer.getId());
+        farmer.setTrustScore(latestTrustScore);
+
+        Farmer updatedFarmer = farmerRepository.save(farmer);
+        return mapToResponse(updatedFarmer);
     }
 
     @Override
@@ -67,26 +75,40 @@ public class FarmerServiceImpl implements  FarmerService {
         Farmer farmer = farmerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Farmer not found"));
 
-        if (dto.getFirstName() != null) farmer.setFirstName(dto.getFirstName());
-        if (dto.getPhoneNumber() != null) farmer.setPhoneNumber(dto.getPhoneNumber());
-        if (dto.getActive() != null) farmer.setActive(dto.getActive());
-        if (dto.getVerified() != null) farmer.setVerified(dto.getVerified());
-        if (dto.getTrustScore() != null) farmer.setTrustScore(dto.getTrustScore());
-        if (dto.getFarmName() != null) farmer.setFarmName(dto.getFarmName());
-        if (dto.getFarmLocation() != null) farmer.setFarmLocation(dto.getFarmLocation());
-        if (dto.getSuccessfulSales() != null) farmer.setSuccessfulSales(dto.getSuccessfulSales());
-        if (dto.getUnsuccessfulSales() != null) farmer.setUnsuccessfulSales(dto.getUnsuccessfulSales());
-        if (dto.getLastName() != null) farmer.setLastName(dto.getLastName());
-        if (dto.getAddress() != null) farmer.setAddress(dto.getAddress());
-        if (dto.getEmail() != null) farmer.setEmail(dto.getEmail());
-        if (dto.getUsername() != null) farmer.setUsername(dto.getUsername());
-        if (dto.getNationalId() != null) farmer.setNationalId(dto.getNationalId());
-        if (dto.getRole() != null) farmer.setRole(dto.getRole());
+        if (dto.getFirstName() != null)
+            farmer.setFirstName(dto.getFirstName());
+        if (dto.getPhoneNumber() != null)
+            farmer.setPhoneNumber(dto.getPhoneNumber());
+        if (dto.getActive() != null)
+            farmer.setActive(dto.getActive());
+        if (dto.getVerified() != null)
+            farmer.setVerified(dto.getVerified());
+        if (dto.getTrustScore() != null)
+            farmer.setTrustScore(dto.getTrustScore());
+        if (dto.getFarmName() != null)
+            farmer.setFarmName(dto.getFarmName());
+        if (dto.getFarmLocation() != null)
+            farmer.setFarmLocation(dto.getFarmLocation());
+        if (dto.getSuccessfulSales() != null)
+            farmer.setSuccessfulSales(dto.getSuccessfulSales());
+        if (dto.getUnsuccessfulSales() != null)
+            farmer.setUnsuccessfulSales(dto.getUnsuccessfulSales());
+        if (dto.getLastName() != null)
+            farmer.setLastName(dto.getLastName());
+        if (dto.getAddress() != null)
+            farmer.setAddress(dto.getAddress());
+        if (dto.getEmail() != null)
+            farmer.setEmail(dto.getEmail());
+        if (dto.getUsername() != null)
+            farmer.setUsername(dto.getUsername());
+        if (dto.getNationalId() != null)
+            farmer.setNationalId(dto.getNationalId());
+        if (dto.getRole() != null)
+            farmer.setRole(dto.getRole());
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             String encodedPassword = passwordEncoder.encode(dto.getPassword());
             farmer.setPassword(encodedPassword);
         }
-
 
         return mapToResponse(farmerRepository.save(farmer));
     }

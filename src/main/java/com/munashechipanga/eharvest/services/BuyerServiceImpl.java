@@ -25,11 +25,19 @@ public class BuyerServiceImpl implements BuyerService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private TrustScoreClient trustScoreClient;
+
     @Override
     public UserResponseDTO getBuyerById(Long id) {
         Buyer buyer = buyerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Buyer not found"));
-        return mapToResponse(buyer);
+
+        Integer latestTrustScore = trustScoreClient.fetchTrustScore(buyer.getId());
+        buyer.setTrustScore(latestTrustScore);
+
+        Buyer updatedBuyer = buyerRepository.save(buyer);
+        return mapToResponse(updatedBuyer);
     }
 
     @Override
@@ -67,25 +75,38 @@ public class BuyerServiceImpl implements BuyerService {
         Buyer buyer = buyerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Buyer not found"));
 
-        if (dto.getFirstName() != null) buyer.setFirstName(dto.getFirstName());
-        if (dto.getPhoneNumber() != null) buyer.setPhoneNumber(dto.getPhoneNumber());
-        if (dto.getActive() != null) buyer.setActive(dto.getActive());
-        if (dto.getVerified() != null) buyer.setVerified(dto.getVerified());
-        if (dto.getTrustScore() != null) buyer.setTrustScore(dto.getTrustScore());
-        if (dto.getCompanyName() != null) buyer.setCompanyName(dto.getCompanyName());
-        if (dto.getSuccessfulBuys() != null) buyer.setSuccessfulBuys(dto.getSuccessfulBuys());
-        if (dto.getUnsuccessfulBuys() != null) buyer.setUnsuccessfulBuys(dto.getUnsuccessfulBuys());
-        if (dto.getLastName() != null) buyer.setLastName(dto.getLastName());
-        if (dto.getAddress() != null) buyer.setAddress(dto.getAddress());
-        if (dto.getEmail() != null) buyer.setEmail(dto.getEmail());
-        if (dto.getUsername() != null) buyer.setUsername(dto.getUsername());
-        if (dto.getNationalId() != null) buyer.setNationalId(dto.getNationalId());
-        if (dto.getRole() != null) buyer.setRole(dto.getRole());
+        if (dto.getFirstName() != null)
+            buyer.setFirstName(dto.getFirstName());
+        if (dto.getPhoneNumber() != null)
+            buyer.setPhoneNumber(dto.getPhoneNumber());
+        if (dto.getActive() != null)
+            buyer.setActive(dto.getActive());
+        if (dto.getVerified() != null)
+            buyer.setVerified(dto.getVerified());
+        if (dto.getTrustScore() != null)
+            buyer.setTrustScore(dto.getTrustScore());
+        if (dto.getCompanyName() != null)
+            buyer.setCompanyName(dto.getCompanyName());
+        if (dto.getSuccessfulBuys() != null)
+            buyer.setSuccessfulBuys(dto.getSuccessfulBuys());
+        if (dto.getUnsuccessfulBuys() != null)
+            buyer.setUnsuccessfulBuys(dto.getUnsuccessfulBuys());
+        if (dto.getLastName() != null)
+            buyer.setLastName(dto.getLastName());
+        if (dto.getAddress() != null)
+            buyer.setAddress(dto.getAddress());
+        if (dto.getEmail() != null)
+            buyer.setEmail(dto.getEmail());
+        if (dto.getUsername() != null)
+            buyer.setUsername(dto.getUsername());
+        if (dto.getNationalId() != null)
+            buyer.setNationalId(dto.getNationalId());
+        if (dto.getRole() != null)
+            buyer.setRole(dto.getRole());
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             String encodedPassword = passwordEncoder.encode(dto.getPassword());
             buyer.setPassword(encodedPassword);
         }
-
 
         return mapToResponse(buyerRepository.save(buyer));
     }

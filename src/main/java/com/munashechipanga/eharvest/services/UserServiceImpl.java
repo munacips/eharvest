@@ -27,6 +27,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private TrustScoreClient trustScoreClient;
+
     @Override
     public UserResponseDTO createUser(UserRequestDTO dto) {
         User user;
@@ -84,34 +87,55 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + dto.getId()));
 
-        if (dto.getUsername() != null) user.setUsername(dto.getUsername());
-        if (dto.getFirstName() != null) user.setFirstName(dto.getFirstName());
-        if (dto.getLastName() != null) user.setLastName(dto.getLastName());
-        if (dto.getNationalId() != null) user.setNationalId(dto.getNationalId());
-        if (dto.getAddress() != null) user.setAddress(dto.getAddress());
-        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
-        if (dto.getPhoneNumber() != null) user.setPhoneNumber(dto.getPhoneNumber());
-        if (dto.getPassword() != null) user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        if (dto.getVerified() != null) user.setVerified(dto.getVerified());
-        if (dto.getTrustScore() != null) user.setTrustScore(dto.getTrustScore());
-        if (dto.getActive() != null) user.setActive(dto.getActive());
-        if (dto.getUsdBalance() != null) user.setUsdBalance(dto.getUsdBalance());
-        if (dto.getZigBalance() != null) user.setZigBalance(dto.getZigBalance());
+        if (dto.getUsername() != null)
+            user.setUsername(dto.getUsername());
+        if (dto.getFirstName() != null)
+            user.setFirstName(dto.getFirstName());
+        if (dto.getLastName() != null)
+            user.setLastName(dto.getLastName());
+        if (dto.getNationalId() != null)
+            user.setNationalId(dto.getNationalId());
+        if (dto.getAddress() != null)
+            user.setAddress(dto.getAddress());
+        if (dto.getEmail() != null)
+            user.setEmail(dto.getEmail());
+        if (dto.getPhoneNumber() != null)
+            user.setPhoneNumber(dto.getPhoneNumber());
+        if (dto.getPassword() != null)
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        if (dto.getVerified() != null)
+            user.setVerified(dto.getVerified());
+        if (dto.getTrustScore() != null)
+            user.setTrustScore(dto.getTrustScore());
+        if (dto.getActive() != null)
+            user.setActive(dto.getActive());
+        if (dto.getUsdBalance() != null)
+            user.setUsdBalance(dto.getUsdBalance());
+        if (dto.getZigBalance() != null)
+            user.setZigBalance(dto.getZigBalance());
 
         if (user instanceof Farmer) {
             Farmer f = (Farmer) user;
-            if (dto.getFarmName() != null) f.setFarmName(dto.getFarmName());
-            if (dto.getFarmLocation() != null) f.setFarmLocation(dto.getFarmLocation());
-            if (dto.getSuccessfulBuys() != null) f.setSuccessfulSales(dto.getSuccessfulBuys());
-            if (dto.getUnsuccessfulSales() != null) f.setUnsuccessfulSales(dto.getUnsuccessfulSales());
+            if (dto.getFarmName() != null)
+                f.setFarmName(dto.getFarmName());
+            if (dto.getFarmLocation() != null)
+                f.setFarmLocation(dto.getFarmLocation());
+            if (dto.getSuccessfulBuys() != null)
+                f.setSuccessfulSales(dto.getSuccessfulBuys());
+            if (dto.getUnsuccessfulSales() != null)
+                f.setUnsuccessfulSales(dto.getUnsuccessfulSales());
         } else if (user instanceof Buyer) {
             Buyer b = (Buyer) user;
-            if (dto.getCompanyName() != null) b.setCompanyName(dto.getCompanyName());
-            if (dto.getSuccessfulBuys() != null) b.setSuccessfulBuys(dto.getSuccessfulBuys());
-            if (dto.getUnsuccessfulBuys() != null) b.setUnsuccessfulBuys(dto.getUnsuccessfulBuys());
+            if (dto.getCompanyName() != null)
+                b.setCompanyName(dto.getCompanyName());
+            if (dto.getSuccessfulBuys() != null)
+                b.setSuccessfulBuys(dto.getSuccessfulBuys());
+            if (dto.getUnsuccessfulBuys() != null)
+                b.setUnsuccessfulBuys(dto.getUnsuccessfulBuys());
         } else if (user instanceof LogisticsProvider) {
             LogisticsProvider lp = (LogisticsProvider) user;
-            if (dto.getLicenseNumber() != null) lp.setLicenseNumber(dto.getLicenseNumber());
+            if (dto.getLicenseNumber() != null)
+                lp.setLicenseNumber(dto.getLicenseNumber());
         }
 
         User updated = userRepository.save(user);
@@ -129,7 +153,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public UserResponseDTO getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id : " + id + " not found"));
-        return mapToResponse(user);
+
+        Integer latestTrustScore = trustScoreClient.fetchTrustScore(user.getId());
+        user.setTrustScore(latestTrustScore);
+
+        User updatedUser = userRepository.save(user);
+        return mapToResponse(updatedUser);
     }
 
     @Override
@@ -188,8 +217,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         // Map your DB role to Spring Security role
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
-                .password(user.getPassword())             // already hashed by BCrypt
-                .roles(user.getRole().toUpperCase())      // FARMER -> ROLE_FARMER internally
+                .password(user.getPassword()) // already hashed by BCrypt
+                .roles(user.getRole().toUpperCase()) // FARMER -> ROLE_FARMER internally
                 .build();
     }
 
