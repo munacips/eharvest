@@ -33,10 +33,7 @@ public class FarmerServiceImpl implements FarmerService {
         Farmer farmer = farmerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Farmer not found"));
 
-        Integer latestTrustScore = trustScoreClient.fetchTrustScore(farmer.getId());
-        farmer.setTrustScore(latestTrustScore);
-
-        Farmer updatedFarmer = farmerRepository.save(farmer);
+        Farmer updatedFarmer = refreshTrustScore(farmer);
         return mapToResponse(updatedFarmer);
     }
 
@@ -121,6 +118,7 @@ public class FarmerServiceImpl implements FarmerService {
     @Override
     public List<UserResponseDTO> getAllFarmers() {
         return farmerRepository.findAll().stream()
+                .map(this::refreshTrustScore)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -128,7 +126,14 @@ public class FarmerServiceImpl implements FarmerService {
     @Override
     public Page<UserResponseDTO> search(FarmerFilter filter, Pageable pageable) {
         return farmerRepository.findAll(FarmerSpecifications.withFilters(filter), pageable)
+                .map(this::refreshTrustScore)
                 .map(this::mapToResponse);
+    }
+
+    private Farmer refreshTrustScore(Farmer farmer) {
+        Integer latestTrustScore = trustScoreClient.fetchTrustScore(farmer.getId());
+        farmer.setTrustScore(latestTrustScore);
+        return farmerRepository.save(farmer);
     }
 
     private UserResponseDTO mapToResponse(Farmer user) {

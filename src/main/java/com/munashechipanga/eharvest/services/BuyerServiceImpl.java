@@ -33,10 +33,7 @@ public class BuyerServiceImpl implements BuyerService {
         Buyer buyer = buyerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Buyer not found"));
 
-        Integer latestTrustScore = trustScoreClient.fetchTrustScore(buyer.getId());
-        buyer.setTrustScore(latestTrustScore);
-
-        Buyer updatedBuyer = buyerRepository.save(buyer);
+        Buyer updatedBuyer = refreshTrustScore(buyer);
         return mapToResponse(updatedBuyer);
     }
 
@@ -119,13 +116,21 @@ public class BuyerServiceImpl implements BuyerService {
     @Override
     public List<UserResponseDTO> getAllBuyers() {
         return buyerRepository.findAll().stream()
+                .map(this::refreshTrustScore)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     public Page<UserResponseDTO> search(BuyerFilter filter, Pageable pageable) {
         return buyerRepository.findAll(BuyerSpecifications.withFilters(filter), pageable)
+                .map(this::refreshTrustScore)
                 .map(this::mapToResponse);
+    }
+
+    private Buyer refreshTrustScore(Buyer buyer) {
+        Integer latestTrustScore = trustScoreClient.fetchTrustScore(buyer.getId());
+        buyer.setTrustScore(latestTrustScore);
+        return buyerRepository.save(buyer);
     }
 
     private UserResponseDTO mapToResponse(Buyer user) {
@@ -141,9 +146,9 @@ public class BuyerServiceImpl implements BuyerService {
         dto.setVerified(user.getVerified());
         dto.setTrustScore(user.getTrustScore());
         dto.setRole("BUYER");
-        dto.setFarmLocation(user.getCompanyName());
+        dto.setCompanyName(user.getCompanyName());
         dto.setSuccessfulBuys(user.getSuccessfulBuys());
-        dto.setUnsuccessfulSales(user.getUnsuccessfulBuys());
+        dto.setUnsuccessfulBuys(user.getUnsuccessfulBuys());
         return dto;
     }
 }

@@ -1,5 +1,6 @@
 package com.munashechipanga.eharvest.entities;
 
+import com.munashechipanga.eharvest.market.Market;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +28,9 @@ public class Produce {
 
     @ManyToOne
     private Farmer farmer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Market market;
 
     @OneToMany(mappedBy = "produce", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProduceImage> images = new ArrayList<>();
