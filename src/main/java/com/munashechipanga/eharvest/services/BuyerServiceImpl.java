@@ -145,6 +145,8 @@ public class BuyerServiceImpl implements BuyerService {
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setVerified(user.getVerified());
         dto.setTrustScore(user.getTrustScore());
+        dto.setUsdBalance(user.getUsdBalance());
+        dto.setZigBalance(user.getZigBalance());
         dto.setRole("BUYER");
         dto.setCompanyName(user.getCompanyName());
         dto.setSuccessfulBuys(user.getSuccessfulBuys());

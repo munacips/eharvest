@@ -44,6 +44,7 @@ public class ProduceServiceImpl implements ProduceService {
         produce.setCityTown(dto.getCityTown());
         produce.setLongitude(dto.getLongitude());
         produce.setLatitude(dto.getLatitude());
+        produce.setCanProvideTransport(dto.getCanProvideTransport());
 
         // Map incoming image URLs to ProduceImage entities
         applyProduceImagesFromDto(produce, dto);
@@ -70,6 +71,7 @@ public class ProduceServiceImpl implements ProduceService {
         if(dto.getCityTown() != null) produce.setCityTown(dto.getCityTown());
         if(dto.getLongitude() != null) produce.setLongitude(dto.getLongitude());
         if(dto.getLatitude() != null) produce.setLatitude(dto.getLatitude());
+        if(dto.getCanProvideTransport() != null) produce.setCanProvideTransport(dto.getCanProvideTransport());
 
         // If imageUrls provided, replace images accordingly; if null, leave unchanged
         applyProduceImagesFromDto(produce, dto);
@@ -133,6 +135,7 @@ public class ProduceServiceImpl implements ProduceService {
          dto.setCityTown(produce.getCityTown());
          dto.setLongitude(produce.getLongitude());
          dto.setLatitude(produce.getLatitude());
+         dto.setCanProvideTransport(produce.getCanProvideTransport());
          if (produce.getImages() != null) {
              dto.setImageUrls(produce.getImages().stream()
                      .map(ProduceImage::getImageUrl)

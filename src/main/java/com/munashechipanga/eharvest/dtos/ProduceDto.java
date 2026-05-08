@@ -23,6 +23,7 @@ public class ProduceDto {
     private Double latitude;
     private LocalDate availableFrom;
     private LocalDate harvestDate;
+    private Boolean canProvideTransport;
     private Farmer farmer;
     private List<String> imageUrls = new ArrayList<>();
 }

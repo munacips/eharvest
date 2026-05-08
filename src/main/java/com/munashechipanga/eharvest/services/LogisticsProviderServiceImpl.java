@@ -133,6 +133,8 @@ public class LogisticsProviderServiceImpl implements LogisticsProviderService {
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setVerified(user.getVerified());
         dto.setTrustScore(user.getTrustScore());
+        dto.setUsdBalance(user.getUsdBalance());
+        dto.setZigBalance(user.getZigBalance());
         dto.setRole("LOGISTICS");
         dto.setLicenseNumber(user.getLicenseNumber());
         dto.setDefensiveId(user.getDefensiveId());

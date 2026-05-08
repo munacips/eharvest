@@ -16,6 +16,7 @@ import com.munashechipanga.eharvest.repositories.OrderRepository;
 import com.munashechipanga.eharvest.repositories.TransactionRepository;
 import com.munashechipanga.eharvest.repositories.UserRepository;
 import com.munashechipanga.eharvest.enums.Currency;
+import com.munashechipanga.eharvest.enums.LogisticsType;
 import com.munashechipanga.eharvest.enums.OrderStatus;
 import com.munashechipanga.eharvest.enums.TransactionType;
 import com.munashechipanga.eharvest.services.NotificationService;
@@ -71,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(dto.getStatus() != null ? dto.getStatus() : OrderStatus.PENDING.name());
         order.setTotalAmount(dto.getTotalAmount());
         order.setCurrency(dto.getCurrency() != null ? dto.getCurrency() : Currency.USD);
+        order.setLogisticsType(dto.getLogisticsType() != null ? dto.getLogisticsType() : LogisticsType.THIRD_PARTY);
         order.setEscrowAmount(dto.getEscrowAmount() != null ? dto.getEscrowAmount() : dto.getTotalAmount());
 
         if (dto.getBuyerId() != null) {
@@ -192,6 +194,10 @@ public class OrderServiceImpl implements OrderService {
         if (!OrderStatus.PENDING.name().equals(order.getStatus())) {
             throw new IllegalArgumentException("Order must be pending to accept");
         }
+        if (getLogisticsType(order) == LogisticsType.BUYER_PICKUP) {
+            order.setEscrowAmount(order.getTotalAmount());
+            holdEscrowForOrder(order);
+        }
         order.setStatus(OrderStatus.ACCEPTED.name());
         Order saved = orderRepository.save(order);
         notifyOrderParties(saved, "Order accepted", "Order " + saved.getId() + " was accepted.");
@@ -221,21 +227,11 @@ public class OrderServiceImpl implements OrderService {
         if (Boolean.TRUE.equals(order.getEscrowHeld())) {
             return mapToDto(order);
         }
-        Buyer buyer = order.getBuyer();
-        if (buyer == null) {
-            throw new ResourceNotFoundException("Order has no buyer");
+        holdEscrowForOrder(order);
+        if (order.getBuyer() != null) {
+            notificationService.sendPaymentUpdate(order.getBuyer(), "Escrow held",
+                    "Funds for order " + order.getId() + " have been held in escrow.");
         }
-        Currency currency = order.getCurrency() != null ? order.getCurrency() : Currency.USD;
-        Double amount = order.getEscrowAmount() != null ? order.getEscrowAmount() : order.getTotalAmount();
-        if (amount == null || amount <= 0) {
-            throw new IllegalArgumentException("Escrow amount must be greater than zero");
-        }
-        subtractBalance(buyer, currency, amount);
-        order.setEscrowHeld(true);
-        orderRepository.save(order);
-        createEscrowTransaction(order, buyer, null, amount, currency, TransactionType.ESCROW_HOLD);
-        notificationService.sendPaymentUpdate(buyer, "Escrow held",
-                "Funds for order " + order.getId() + " have been held in escrow.");
         return mapToDto(order);
     }
 
@@ -243,6 +239,16 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponseDTO confirmDeliveryStarted(Long id) {
         Order order = getOrderEntity(id);
+        LogisticsType logisticsType = getLogisticsType(order);
+        if (logisticsType == LogisticsType.BUYER_PICKUP) {
+            throw new IllegalArgumentException("Delivery start not applicable for buyer pickup");
+        }
+        if (logisticsType == LogisticsType.FARMER_DELIVERY) {
+            if (!OrderStatus.IN_TRANSIT.name().equals(order.getStatus())) {
+                throw new IllegalArgumentException("Farmer delivery starts after buyer accepts transport fee");
+            }
+            return mapToDto(order);
+        }
         if (!OrderStatus.ACCEPTED.name().equals(order.getStatus())) {
             throw new IllegalArgumentException("Order must be accepted before delivery starts");
         }
@@ -256,7 +262,11 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponseDTO confirmDelivery(Long id) {
         Order order = getOrderEntity(id);
-        if (!OrderStatus.IN_TRANSIT.name().equals(order.getStatus())) {
+        LogisticsType logisticsType = getLogisticsType(order);
+        boolean validStatus = logisticsType == LogisticsType.BUYER_PICKUP
+                ? OrderStatus.ACCEPTED.name().equals(order.getStatus())
+                : OrderStatus.IN_TRANSIT.name().equals(order.getStatus());
+        if (!validStatus) {
             throw new IllegalArgumentException("Order must be in transit before delivery confirmation");
         }
         order.setStatus(OrderStatus.DELIVERED.name());
@@ -265,6 +275,64 @@ public class OrderServiceImpl implements OrderService {
         }
         Order saved = orderRepository.save(order);
         notifyOrderParties(saved, "Order delivered", "Order " + saved.getId() + " marked as delivered.");
+        return mapToDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponseDTO proposeTransportFee(Long id, Double fee) {
+        Order order = getOrderEntity(id);
+        if (getLogisticsType(order) != LogisticsType.FARMER_DELIVERY) {
+            throw new IllegalArgumentException("Transport fee proposal is only valid for farmer delivery");
+        }
+        if (!OrderStatus.ACCEPTED.name().equals(order.getStatus())) {
+            throw new IllegalArgumentException("Order must be accepted before proposing transport fee");
+        }
+        if (fee == null || fee <= 0) {
+            throw new IllegalArgumentException("Transport fee must be greater than zero");
+        }
+        order.setTransportFee(fee);
+        order.setStatus(OrderStatus.AWAITING_TRANSPORT_FEE_APPROVAL.name());
+        Order saved = orderRepository.save(order);
+        notifyOrderParties(saved, "Transport fee proposed", "Transport fee proposed for order " + saved.getId() + ".");
+        return mapToDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponseDTO acceptTransportFee(Long id) {
+        Order order = getOrderEntity(id);
+        if (getLogisticsType(order) != LogisticsType.FARMER_DELIVERY) {
+            throw new IllegalArgumentException("Transport fee approval is only valid for farmer delivery");
+        }
+        if (!OrderStatus.AWAITING_TRANSPORT_FEE_APPROVAL.name().equals(order.getStatus())) {
+            throw new IllegalArgumentException("Order must be awaiting transport fee approval");
+        }
+        if (order.getTransportFee() == null || order.getTransportFee() <= 0) {
+            throw new IllegalArgumentException("Transport fee must be greater than zero");
+        }
+        order.setEscrowAmount(order.getTotalAmount() + order.getTransportFee());
+        holdEscrowForOrder(order);
+        order.setStatus(OrderStatus.IN_TRANSIT.name());
+        Order saved = orderRepository.save(order);
+        notifyOrderParties(saved, "Transport fee accepted", "Transport fee accepted for order " + saved.getId() + ".");
+        return mapToDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponseDTO rejectTransportFee(Long id) {
+        Order order = getOrderEntity(id);
+        if (getLogisticsType(order) != LogisticsType.FARMER_DELIVERY) {
+            throw new IllegalArgumentException("Transport fee rejection is only valid for farmer delivery");
+        }
+        if (!OrderStatus.AWAITING_TRANSPORT_FEE_APPROVAL.name().equals(order.getStatus())) {
+            throw new IllegalArgumentException("Order must be awaiting transport fee approval");
+        }
+        order.setTransportFee(null);
+        order.setStatus(OrderStatus.ACCEPTED.name());
+        Order saved = orderRepository.save(order);
+        notifyOrderParties(saved, "Transport fee rejected", "Transport fee rejected for order " + saved.getId() + ".");
         return mapToDto(saved);
     }
 
@@ -278,6 +346,8 @@ public class OrderServiceImpl implements OrderService {
         dto.setStatus(order.getStatus());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setLogisticsRequest(order.getLogisticsRequest());
+        dto.setLogisticsType(getLogisticsType(order));
+        dto.setTransportFee(order.getTransportFee());
         dto.setEscrowReleased(order.getEscrowReleased());
         dto.setCurrency(order.getCurrency());
         dto.setEscrowHeld(order.getEscrowHeld());
@@ -298,6 +368,29 @@ public class OrderServiceImpl implements OrderService {
         if (order.getFarmer() != null) {
             notificationService.sendOrderUpdate(order.getFarmer(), title, message);
         }
+    }
+
+    private LogisticsType getLogisticsType(Order order) {
+        return order.getLogisticsType() != null ? order.getLogisticsType() : LogisticsType.THIRD_PARTY;
+    }
+
+    private void holdEscrowForOrder(Order order) {
+        if (Boolean.TRUE.equals(order.getEscrowHeld())) {
+            return;
+        }
+        Buyer buyer = order.getBuyer();
+        if (buyer == null) {
+            throw new ResourceNotFoundException("Order has no buyer");
+        }
+        Currency currency = order.getCurrency() != null ? order.getCurrency() : Currency.USD;
+        Double amount = order.getEscrowAmount() != null ? order.getEscrowAmount() : order.getTotalAmount();
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("Escrow amount must be greater than zero");
+        }
+        subtractBalance(buyer, currency, amount);
+        order.setEscrowHeld(true);
+        orderRepository.save(order);
+        createEscrowTransaction(order, buyer, null, amount, currency, TransactionType.ESCROW_HOLD);
     }
 
     private void releaseEscrow(Order order) {

@@ -22,6 +22,7 @@ public class CreateProduceDTO {
     private Double latitude;
     private LocalDate availableFrom;
     private LocalDate harvestDate;
+    private Boolean canProvideTransport;
     private Long farmer;
     private List<String> imageUrls = new ArrayList<>();
 }

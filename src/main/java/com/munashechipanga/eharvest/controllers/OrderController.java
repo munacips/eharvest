@@ -70,6 +70,21 @@ public class OrderController {
         return ResponseEntity.ok(orderService.confirmDelivery(id));
     }
 
+    @PostMapping("/{id}/propose-transport-fee")
+    public ResponseEntity<OrderResponseDTO> proposeTransportFee(@PathVariable Long id, @RequestParam Double fee){
+        return ResponseEntity.ok(orderService.proposeTransportFee(id, fee));
+    }
+
+    @PostMapping("/{id}/accept-transport-fee")
+    public ResponseEntity<OrderResponseDTO> acceptTransportFee(@PathVariable Long id){
+        return ResponseEntity.ok(orderService.acceptTransportFee(id));
+    }
+
+    @PostMapping("/{id}/reject-transport-fee")
+    public ResponseEntity<OrderResponseDTO> rejectTransportFee(@PathVariable Long id){
+        return ResponseEntity.ok(orderService.rejectTransportFee(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<OrderResponseDTO> deleteOrder(@PathVariable Long id){
         orderService.deleteOrder(id);

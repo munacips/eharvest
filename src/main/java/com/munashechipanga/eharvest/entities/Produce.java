@@ -28,6 +28,7 @@ public class Produce {
     private Double latitude;
     private LocalDate availableFrom;
     private LocalDate harvestDate;
+    private Boolean canProvideTransport;
 
     @ManyToOne
     private Farmer farmer;

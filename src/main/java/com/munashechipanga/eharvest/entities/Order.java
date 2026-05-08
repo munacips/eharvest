@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import com.munashechipanga.eharvest.enums.Currency;
+import com.munashechipanga.eharvest.enums.LogisticsType;
 
 @Entity
 @Table(name = "orders")
@@ -19,6 +20,9 @@ public class Order {
     private String status; // PENDING, CONFIRMED, IN_TRANSIT, DELIVERED, REJECTED
     @Enumerated(EnumType.STRING)
     private Currency currency;
+    @Enumerated(EnumType.STRING)
+    private LogisticsType logisticsType;
+    private Double transportFee;
     private Boolean escrowHeld;
     private Double escrowAmount;
 

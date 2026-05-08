@@ -148,6 +148,8 @@ public class FarmerServiceImpl implements FarmerService {
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setVerified(user.getVerified());
         dto.setTrustScore(user.getTrustScore());
+        dto.setUsdBalance(user.getUsdBalance());
+        dto.setZigBalance(user.getZigBalance());
         dto.setRole("FARMER");
         dto.setFarmLocation(user.getFarmLocation());
         dto.setFarmName(user.getFarmName());

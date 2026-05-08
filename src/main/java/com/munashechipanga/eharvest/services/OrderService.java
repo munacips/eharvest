@@ -19,4 +19,7 @@ public interface OrderService {
     OrderResponseDTO holdEscrow(Long id);
     OrderResponseDTO confirmDeliveryStarted(Long id);
     OrderResponseDTO confirmDelivery(Long id);
+    OrderResponseDTO proposeTransportFee(Long id, Double fee);
+    OrderResponseDTO acceptTransportFee(Long id);
+    OrderResponseDTO rejectTransportFee(Long id);
 }

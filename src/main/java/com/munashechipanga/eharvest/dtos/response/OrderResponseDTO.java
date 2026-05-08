@@ -4,6 +4,7 @@ import com.munashechipanga.eharvest.entities.Buyer;
 import com.munashechipanga.eharvest.entities.Farmer;
 import com.munashechipanga.eharvest.entities.LogisticsRequest;
 import com.munashechipanga.eharvest.enums.Currency;
+import com.munashechipanga.eharvest.enums.LogisticsType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +18,8 @@ public class OrderResponseDTO {
     private Double totalAmount;
     private String status;
     private Currency currency;
+    private LogisticsType logisticsType;
+    private Double transportFee;
     private Boolean escrowHeld;
     private Double escrowAmount;
     private Buyer buyer;
