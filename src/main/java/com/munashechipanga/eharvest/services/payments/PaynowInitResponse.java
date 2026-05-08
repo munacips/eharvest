@@ -9,4 +9,6 @@ public class PaynowInitResponse {
     private String providerReference;
     private String redirectUrl;
     private String pollUrl;
+    private String status;
+    private String error;
 }

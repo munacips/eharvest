@@ -66,4 +66,14 @@ public class LogisticsController {
     public ResponseEntity<LogisticsRequestDto> markDelivered(@PathVariable Long id) {
         return ResponseEntity.ok(logisticsService.markDelivered(id));
     }
+
+    @PostMapping("{id}/hold-escrow")
+    public ResponseEntity<LogisticsRequestDto> holdEscrow(@PathVariable Long id) {
+        return ResponseEntity.ok(logisticsService.holdEscrow(id));
+    }
+
+    @PostMapping("{id}/release-escrow")
+    public ResponseEntity<LogisticsRequestDto> releaseEscrow(@PathVariable Long id) {
+        return ResponseEntity.ok(logisticsService.releaseEscrow(id));
+    }
 }

@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("api/v1/payments")
 public class PaymentController {
@@ -20,9 +22,12 @@ public class PaymentController {
     }
 
     @PostMapping("/webhook")
-    public ResponseEntity<PaymentResponseDTO> webhook(@RequestParam String reference,
-                                                      @RequestParam String status,
-                                                      @RequestParam(required = false) String providerRef) {
-        return ResponseEntity.ok(paymentService.handleWebhook(reference, status, providerRef));
+    public ResponseEntity<PaymentResponseDTO> webhook(@RequestParam Map<String, String> fields) {
+        return ResponseEntity.ok(paymentService.handleWebhook(fields));
+    }
+
+    @GetMapping("/return")
+    public ResponseEntity<PaymentResponseDTO> paymentReturn(@RequestParam String reference) {
+        return ResponseEntity.ok(paymentService.handleWebhook(reference, null, null));
     }
 }

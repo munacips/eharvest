@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/farmers").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/logistics-providers").permitAll()
                         .requestMatchers("/api/v1/heatmap/**").permitAll()
+                        .requestMatchers("/api/v1/payments/webhook", "/api/v1/payments/return").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
                         .requestMatchers("/farmer/**").hasRole("FARMER")

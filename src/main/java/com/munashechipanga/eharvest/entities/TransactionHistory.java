@@ -25,6 +25,8 @@ public class TransactionHistory {
     private Currency currency;
     private String provider;
     private String providerReference;
+    @Column(length = 1000)
+    private String pollUrl;
 
     @ManyToOne
     private User user;

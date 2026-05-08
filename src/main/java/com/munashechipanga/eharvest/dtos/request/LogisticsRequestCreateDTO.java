@@ -11,6 +11,8 @@ public class LogisticsRequestCreateDTO {
     private String deliveryLocation;
     private String status;
     private Double cost;
+    private Boolean escrowHeld;
+    private Boolean escrowReleased;
     private Long assignedProvider;
     private Long order;
 }

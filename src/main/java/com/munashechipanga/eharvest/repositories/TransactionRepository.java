@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface TransactionRepository extends JpaRepository<TransactionHistory,Long>, JpaSpecificationExecutor<TransactionHistory> {
     Optional<TransactionHistory> findByTransactionReference(String reference);
     Optional<TransactionHistory> findByProviderReference(String providerReference);
+    Optional<TransactionHistory> findByPollUrl(String pollUrl);
 }

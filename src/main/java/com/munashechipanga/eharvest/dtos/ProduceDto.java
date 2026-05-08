@@ -18,6 +18,9 @@ public class ProduceDto {
     private String qualityGrade;
     private Double quantity;
     private Double price;
+    private String cityTown;
+    private Double longitude;
+    private Double latitude;
     private LocalDate availableFrom;
     private LocalDate harvestDate;
     private Farmer farmer;

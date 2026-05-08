@@ -83,6 +83,14 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Firebase Admin SDK -->
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.2.0</version>
+        </dependency>
+
+        <!-- Vonage uses HTTP REST calls; no SDK required here. If you prefer the Vonage SDK, add it later. -->
 
     </dependencies>
 

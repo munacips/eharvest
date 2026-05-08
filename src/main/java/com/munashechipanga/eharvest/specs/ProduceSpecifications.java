@@ -12,6 +12,7 @@ public class ProduceSpecifications {
                 .and(categoryEquals(f.getCategory()))
                 .and(nameLike(f.getName()))
                 .and(qualityEquals(f.getQualityGrade()))
+                .and(cityTownEquals(f.getCityTown()))
                 .and(harvestFrom(f.getHarvestFrom()))
                 .and(harvestTo(f.getHarvestTo()))
                 .and(searchLike(f.getSearch()));
@@ -41,6 +42,10 @@ public class ProduceSpecifications {
         return (root, q, cb) -> qg == null || qg.isBlank() ? null : cb.equal(cb.lower(root.get("qualityGrade")), qg.toLowerCase());
     }
 
+    private static Specification<Produce> cityTownEquals(String cityTown) {
+        return (root, q, cb) -> cityTown == null || cityTown.isBlank() ? null : cb.equal(cb.lower(root.get("cityTown")), cityTown.toLowerCase());
+    }
+
     private static Specification<Produce> harvestFrom(java.time.LocalDate from) {
         return (root, q, cb) -> from == null ? null : cb.greaterThanOrEqualTo(root.get("harvestDate"), from);
     }
@@ -55,7 +60,8 @@ public class ProduceSpecifications {
             String like = "%" + s.toLowerCase() + "%";
             return cb.or(
                     cb.like(cb.lower(root.get("name")), like),
-                    cb.like(cb.lower(root.get("description")), like)
+                    cb.like(cb.lower(root.get("description")), like),
+                    cb.like(cb.lower(root.get("cityTown")), like)
             );
         };
     }

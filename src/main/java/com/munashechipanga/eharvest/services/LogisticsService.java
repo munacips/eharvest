@@ -17,5 +17,7 @@ public interface LogisticsService {
     LogisticsRequestDto rejectRequest(Long requestId, Long providerId);
     LogisticsRequestDto markInTransit(Long requestId);
     LogisticsRequestDto markDelivered(Long requestId);
+    LogisticsRequestDto holdEscrow(Long requestId);
+    LogisticsRequestDto releaseEscrow(Long requestId);
 
 }

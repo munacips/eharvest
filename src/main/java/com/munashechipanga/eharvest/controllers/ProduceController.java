@@ -41,6 +41,7 @@ public class ProduceController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String qualityGrade,
+            @RequestParam(required = false) String cityTown,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate harvestFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate harvestTo,
             @RequestParam(required = false) String search,
@@ -57,6 +58,7 @@ public class ProduceController {
         filter.setCategory(category);
         filter.setName(name);
         filter.setQualityGrade(qualityGrade);
+        filter.setCityTown(cityTown);
         filter.setHarvestFrom(harvestFrom);
         filter.setHarvestTo(harvestTo);
         filter.setSearch(search);

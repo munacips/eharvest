@@ -13,8 +13,10 @@ import com.munashechipanga.eharvest.services.payments.PaynowClient;
 import com.munashechipanga.eharvest.services.payments.PaynowInitResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -32,9 +34,13 @@ public class PaymentServiceImpl implements PaymentService {
     NotificationService notificationService;
 
     @Override
+    @Transactional
     public PaymentResponseDTO initiatePayment(PaymentRequestDTO dto) {
         if (dto.getType() == null || dto.getCurrency() == null) {
             throw new IllegalArgumentException("Payment type and currency are required");
+        }
+        if (dto.getAmount() == null || dto.getAmount() <= 0) {
+            throw new IllegalArgumentException("Payment amount must be greater than zero");
         }
         if (dto.getType() != TransactionType.DEPOSIT && dto.getType() != TransactionType.WITHDRAWAL) {
             throw new IllegalArgumentException("Payment type must be DEPOSIT or WITHDRAWAL");
@@ -69,45 +75,71 @@ public class PaymentServiceImpl implements PaymentService {
                 dto.getCurrency().name(), txn.getTransactionReference());
 
         txn.setProviderReference(response.getProviderReference());
+        txn.setPollUrl(response.getPollUrl());
         transactionRepository.save(txn);
 
-        PaymentResponseDTO out = new PaymentResponseDTO();
-        out.setTransactionId(txn.getId());
-        out.setTransactionReference(txn.getTransactionReference());
-        out.setStatus(txn.getStatus());
-        out.setProvider(txn.getProvider());
-        out.setProviderReference(txn.getProviderReference());
+        PaymentResponseDTO out = toResponse(txn);
         out.setRedirectUrl(response.getRedirectUrl());
-        out.setCurrency(txn.getCurrency());
-        out.setType(txn.getType());
+        out.setPollUrl(response.getPollUrl());
         return out;
     }
 
     @Override
+    @Transactional
     public PaymentResponseDTO handleWebhook(String reference, String status, String providerRef) {
+        if (status == null) {
+            TransactionHistory txn = transactionRepository.findByTransactionReference(reference)
+                    .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+            return toResponse(txn);
+        }
+        return completeWebhook(reference, status, providerRef, null);
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponseDTO handleWebhook(Map<String, String> fields) {
+        if (!paynowClient.isHashValid(fields)) {
+            throw new IllegalArgumentException("Invalid Paynow webhook hash");
+        }
+        String reference = value(fields, "reference");
+        String status = value(fields, "status");
+        String providerRef = value(fields, "paynowreference");
+        String pollUrl = value(fields, "pollurl");
+        return completeWebhook(reference, status, providerRef, pollUrl);
+    }
+
+    private PaymentResponseDTO completeWebhook(String reference, String status, String providerRef, String pollUrl) {
         TransactionHistory txn = null;
-        if (reference != null) {
+        if (reference != null && !reference.isBlank()) {
             txn = transactionRepository.findByTransactionReference(reference).orElse(null);
         }
-        if (txn == null && providerRef != null) {
+        if (txn == null && providerRef != null && !providerRef.isBlank()) {
             txn = transactionRepository.findByProviderReference(providerRef).orElse(null);
+        }
+        if (txn == null && pollUrl != null && !pollUrl.isBlank()) {
+            txn = transactionRepository.findByPollUrl(pollUrl).orElse(null);
         }
         if (txn == null) {
             throw new ResourceNotFoundException("Transaction not found");
         }
+
+        String previousStatus = txn.getStatus();
         txn.setStatus(status);
         if (providerRef != null) {
             txn.setProviderReference(providerRef);
         }
+        if (pollUrl != null) {
+            txn.setPollUrl(pollUrl);
+        }
 
         User user = resolveUser(txn);
-        if ("SUCCESS".equalsIgnoreCase(status) || "PAID".equalsIgnoreCase(status)) {
+        if (isSuccessful(status) && !isSuccessful(previousStatus)) {
             if (txn.getType() == TransactionType.DEPOSIT) {
                 addBalance(user, txn.getCurrency(), txn.getAmount());
             }
             notificationService.sendPaymentUpdate(user, "Payment successful",
                     "Transaction " + txn.getTransactionReference() + " completed.");
-        } else if ("FAILED".equalsIgnoreCase(status)) {
+        } else if (isFailed(status) && !isFailed(previousStatus) && !isSuccessful(previousStatus)) {
             if (txn.getType() == TransactionType.WITHDRAWAL) {
                 addBalance(user, txn.getCurrency(), txn.getAmount());
             }
@@ -116,7 +148,10 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         transactionRepository.save(txn);
+        return toResponse(txn);
+    }
 
+    private PaymentResponseDTO toResponse(TransactionHistory txn) {
         PaymentResponseDTO out = new PaymentResponseDTO();
         out.setTransactionId(txn.getId());
         out.setTransactionReference(txn.getTransactionReference());
@@ -125,7 +160,30 @@ public class PaymentServiceImpl implements PaymentService {
         out.setProviderReference(txn.getProviderReference());
         out.setCurrency(txn.getCurrency());
         out.setType(txn.getType());
+        out.setPollUrl(txn.getPollUrl());
         return out;
+    }
+
+    private boolean isSuccessful(String status) {
+        return "SUCCESS".equalsIgnoreCase(status)
+                || "PAID".equalsIgnoreCase(status)
+                || "AWAITING DELIVERY".equalsIgnoreCase(status)
+                || "DELIVERED".equalsIgnoreCase(status);
+    }
+
+    private boolean isFailed(String status) {
+        return "FAILED".equalsIgnoreCase(status)
+                || "CANCELLED".equalsIgnoreCase(status)
+                || "CANCELED".equalsIgnoreCase(status)
+                || "ERROR".equalsIgnoreCase(status);
+    }
+
+    private String value(Map<String, String> fields, String key) {
+        return fields.entrySet().stream()
+                .filter(entry -> entry.getKey().equalsIgnoreCase(key))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
     }
 
     private User resolveUser(TransactionHistory txn) {

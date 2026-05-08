@@ -14,6 +14,7 @@ public class ProduceFilter {
     private String category;
     private String name;
     private String qualityGrade;
+    private String cityTown;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate harvestFrom;

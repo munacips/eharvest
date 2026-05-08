@@ -41,6 +41,9 @@ public class ProduceServiceImpl implements ProduceService {
         produce.setHarvestDate(dto.getHarvestDate());
         produce.setAvailableFrom(produce.getHarvestDate());
         produce.setQualityGrade(dto.getQualityGrade());
+        produce.setCityTown(dto.getCityTown());
+        produce.setLongitude(dto.getLongitude());
+        produce.setLatitude(dto.getLatitude());
 
         // Map incoming image URLs to ProduceImage entities
         applyProduceImagesFromDto(produce, dto);
@@ -64,6 +67,9 @@ public class ProduceServiceImpl implements ProduceService {
         if(dto.getQualityGrade() != null) produce.setQualityGrade(dto.getQualityGrade());
         if(dto.getQuantity() != null) produce.setQuantity(dto.getQuantity());
         if(dto.getPrice() != null) produce.setPrice(dto.getPrice());
+        if(dto.getCityTown() != null) produce.setCityTown(dto.getCityTown());
+        if(dto.getLongitude() != null) produce.setLongitude(dto.getLongitude());
+        if(dto.getLatitude() != null) produce.setLatitude(dto.getLatitude());
 
         // If imageUrls provided, replace images accordingly; if null, leave unchanged
         applyProduceImagesFromDto(produce, dto);
@@ -124,6 +130,9 @@ public class ProduceServiceImpl implements ProduceService {
          dto.setAvailableFrom(produce.getAvailableFrom());
          dto.setQualityGrade(produce.getQualityGrade());
          dto.setHarvestDate(produce.getHarvestDate());
+         dto.setCityTown(produce.getCityTown());
+         dto.setLongitude(produce.getLongitude());
+         dto.setLatitude(produce.getLatitude());
          if (produce.getImages() != null) {
              dto.setImageUrls(produce.getImages().stream()
                      .map(ProduceImage::getImageUrl)

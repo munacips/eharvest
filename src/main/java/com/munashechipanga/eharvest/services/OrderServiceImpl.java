@@ -21,6 +21,7 @@ import com.munashechipanga.eharvest.enums.TransactionType;
 import com.munashechipanga.eharvest.services.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -51,7 +52,14 @@ public class OrderServiceImpl implements OrderService {
     NotificationService notificationService;
 
     @Override
+    @Transactional
     public OrderResponseDTO createOrder(CreateOrderDTO dto) {
+        if (dto.getTotalAmount() == null || dto.getTotalAmount() <= 0) {
+            throw new IllegalArgumentException("Order total amount must be greater than zero");
+        }
+        if (dto.getEscrowAmount() != null && dto.getEscrowAmount() <= 0) {
+            throw new IllegalArgumentException("Escrow amount must be greater than zero");
+        }
 
         LocalDateTime dateTime = LocalDateTime.now();
 
@@ -98,6 +106,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDTO updateOrder(Long id, CreateOrderDTO dto) {
 
         Order order = orderRepository.findById(id)
@@ -124,9 +133,19 @@ public class OrderServiceImpl implements OrderService {
             order.setLogisticsRequest(logisticsRequest);
         }
 
-        if(dto.getTotalAmount() != null) order.setTotalAmount(dto.getTotalAmount());
+        if(dto.getTotalAmount() != null) {
+            if (dto.getTotalAmount() <= 0) {
+                throw new IllegalArgumentException("Order total amount must be greater than zero");
+            }
+            order.setTotalAmount(dto.getTotalAmount());
+        }
         if(dto.getCurrency() != null) order.setCurrency(dto.getCurrency());
-        if(dto.getEscrowAmount() != null) order.setEscrowAmount(dto.getEscrowAmount());
+        if(dto.getEscrowAmount() != null) {
+            if (dto.getEscrowAmount() <= 0) {
+                throw new IllegalArgumentException("Escrow amount must be greater than zero");
+            }
+            order.setEscrowAmount(dto.getEscrowAmount());
+        }
 
         Order updatedOrder = orderRepository.save(order);
 
@@ -167,6 +186,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDTO acceptOrder(Long id) {
         Order order = getOrderEntity(id);
         if (!OrderStatus.PENDING.name().equals(order.getStatus())) {
@@ -179,6 +199,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDTO rejectOrder(Long id, String reason) {
         Order order = getOrderEntity(id);
         order.setStatus(OrderStatus.REJECTED.name());
@@ -191,6 +212,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDTO holdEscrow(Long id) {
         Order order = getOrderEntity(id);
         if (!(OrderStatus.PENDING.name().equals(order.getStatus()) || OrderStatus.ACCEPTED.name().equals(order.getStatus()))) {
@@ -205,6 +227,9 @@ public class OrderServiceImpl implements OrderService {
         }
         Currency currency = order.getCurrency() != null ? order.getCurrency() : Currency.USD;
         Double amount = order.getEscrowAmount() != null ? order.getEscrowAmount() : order.getTotalAmount();
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("Escrow amount must be greater than zero");
+        }
         subtractBalance(buyer, currency, amount);
         order.setEscrowHeld(true);
         orderRepository.save(order);
@@ -215,6 +240,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDTO confirmDeliveryStarted(Long id) {
         Order order = getOrderEntity(id);
         if (!OrderStatus.ACCEPTED.name().equals(order.getStatus())) {
@@ -227,6 +253,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDTO confirmDelivery(Long id) {
         Order order = getOrderEntity(id);
         if (!OrderStatus.IN_TRANSIT.name().equals(order.getStatus())) {
@@ -311,6 +338,7 @@ public class OrderServiceImpl implements OrderService {
         txn.setOrder(order);
         txn.setBuyer(buyer);
         txn.setFarmer(farmer);
+        txn.setUser(buyer != null ? buyer : farmer);
         txn.setCurrency(currency);
         txn.setType(type);
         txn.setProvider("IN_APP");

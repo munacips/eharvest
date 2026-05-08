@@ -13,6 +13,8 @@ public class LogisticsRequestDto {
     private String deliveryLocation;
     private String status;
     private Double cost;
+    private Boolean escrowHeld;
+    private Boolean escrowReleased;
     private LogisticsProvider assignedProvider;
     private Order order;
 }

@@ -14,6 +14,7 @@ public class PaymentResponseDTO {
     private String provider;
     private String providerReference;
     private String redirectUrl;
+    private String pollUrl;
     private Currency currency;
     private TransactionType type;
 }

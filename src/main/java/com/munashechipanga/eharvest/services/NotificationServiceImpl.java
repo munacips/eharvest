@@ -11,28 +11,39 @@ import com.munashechipanga.eharvest.repositories.NotificationRepository;
 import com.munashechipanga.eharvest.services.notifications.EmailNotificationSender;
 import com.munashechipanga.eharvest.services.notifications.PushNotificationSender;
 import com.munashechipanga.eharvest.services.notifications.SmsNotificationSender;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class NotificationServiceImpl implements NotificationService {
 
-    @Autowired
-    NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
+    private final PushNotificationService pushNotificationService;
+    private final SmsService smsService;
+    private final PushNotificationSender pushSender;
+    private final EmailNotificationSender emailSender;
+    private final SmsNotificationSender smsSender;
 
-    @Autowired
-    PushNotificationSender pushSender;
-
-    @Autowired
-    EmailNotificationSender emailSender;
-
-    @Autowired
-    SmsNotificationSender smsSender;
+    public NotificationServiceImpl(NotificationRepository notificationRepository,
+            PushNotificationService pushNotificationService,
+            SmsService smsService,
+            PushNotificationSender pushSender,
+            EmailNotificationSender emailSender,
+            SmsNotificationSender smsSender) {
+        this.notificationRepository = notificationRepository;
+        this.pushNotificationService = pushNotificationService;
+        this.smsService = smsService;
+        this.pushSender = pushSender;
+        this.emailSender = emailSender;
+        this.smsSender = smsSender;
+    }
 
     @Override
     public List<NotificationDto> getUserNotifications(Long userId) {
@@ -80,8 +91,7 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationChannel.PUSH,
                 NotificationChannel.EMAIL,
                 NotificationChannel.SMS,
-                NotificationChannel.IN_APP
-        );
+                NotificationChannel.IN_APP);
 
         for (NotificationChannel channel : channels) {
             Notification notification = new Notification();
@@ -97,6 +107,7 @@ public class NotificationServiceImpl implements NotificationService {
                 dispatch(channel, user, title, message);
                 notification.setStatus(NotificationStatus.SENT);
             } catch (Exception ex) {
+                log.error("Failed to send notification via {}: ", channel, ex);
                 notification.setStatus(NotificationStatus.FAILED);
             }
 
@@ -106,10 +117,21 @@ public class NotificationServiceImpl implements NotificationService {
 
     private void dispatch(NotificationChannel channel, User user, String title, String message) {
         switch (channel) {
-            case PUSH -> pushSender.send(user, title, message);
+            case PUSH -> {
+                pushSender.send(user, title, message);
+                if (user.getId() != null) {
+                    pushNotificationService.sendToUser(user.getId(), title, message, new HashMap<>());
+                }
+            }
             case EMAIL -> emailSender.send(user, title, message);
-            case SMS -> smsSender.send(user, title, message);
+            case SMS -> {
+                smsSender.send(user, title, message);
+                if (user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) {
+                    smsService.sendSms(user.getPhoneNumber(), message);
+                }
+            }
             case IN_APP -> {
+                // In-app notifications are already stored in DB
             }
         }
     }

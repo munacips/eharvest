@@ -14,6 +14,8 @@ public class LogisticsRequest {
     private String deliveryLocation;
     private String status; // AWAITING_PICKUP, IN_TRANSIT, DELIVERED
     private Double cost;
+    private Boolean escrowHeld;
+    private Boolean escrowReleased;
 
     @ManyToOne
     private LogisticsProvider assignedProvider;
