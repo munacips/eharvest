@@ -54,6 +54,7 @@ public class LogisticsServiceImpl implements LogisticsService {
     }
 
     @Override
+    @Transactional
     public LogisticsRequestDto createLogisticsRequest(LogisticsRequestCreateDTO dto) {
 
         LogisticsRequest request = new LogisticsRequest();
@@ -79,6 +80,7 @@ public class LogisticsServiceImpl implements LogisticsService {
             request.setOrder(order);
         }
 
+        validateBuyerCanFundLogistics(request);
 
         LogisticsRequest newRequest = logisticsRepository.save(request);
 
@@ -91,6 +93,7 @@ public class LogisticsServiceImpl implements LogisticsService {
     }
 
     @Override
+    @Transactional
     public LogisticsRequestDto updateLogisticsRequest(Long id, LogisticsRequestCreateDTO dto) {
         LogisticsRequest request = logisticsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Logistics request not found"));
@@ -115,6 +118,8 @@ public class LogisticsServiceImpl implements LogisticsService {
                     .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
             request.setOrder(order);
         }
+
+        validateBuyerCanFundLogistics(request);
 
         LogisticsRequest newRequest = logisticsRepository.save(request);
 
@@ -244,10 +249,7 @@ public class LogisticsServiceImpl implements LogisticsService {
         if (request.getOrder() == null || request.getOrder().getBuyer() == null) {
             throw new ResourceNotFoundException("Logistics request has no buyer order");
         }
-        Double amount = request.getCost();
-        if (amount == null || amount <= 0) {
-            throw new IllegalArgumentException("Logistics cost must be greater than zero");
-        }
+        Double amount = getValidLogisticsCost(request);
         Currency currency = request.getOrder().getCurrency() != null ? request.getOrder().getCurrency() : Currency.USD;
         User buyer = request.getOrder().getBuyer();
         subtractBalance(buyer, currency, amount);
@@ -281,7 +283,7 @@ public class LogisticsServiceImpl implements LogisticsService {
         if (request.getOrder() == null || request.getOrder().getBuyer() == null) {
             throw new ResourceNotFoundException("Logistics request has no buyer order");
         }
-        Double amount = request.getCost();
+        Double amount = getValidLogisticsCost(request);
         Currency currency = request.getOrder().getCurrency() != null ? request.getOrder().getCurrency() : Currency.USD;
         User buyer = request.getOrder().getBuyer();
         addBalance(buyer, currency, amount);
@@ -314,17 +316,40 @@ public class LogisticsServiceImpl implements LogisticsService {
         if (currency == Currency.USD) {
             double current = user.getUsdBalance() != null ? user.getUsdBalance() : 0.0;
             if (current < amount) {
-                throw new IllegalArgumentException("Insufficient USD balance for logistics escrow");
+                throw new IllegalArgumentException("Insufficient buyer USD balance for logistics escrow");
             }
             user.setUsdBalance(current - amount);
         } else {
             double current = user.getZigBalance() != null ? user.getZigBalance() : 0.0;
             if (current < amount) {
-                throw new IllegalArgumentException("Insufficient ZIG balance for logistics escrow");
+                throw new IllegalArgumentException("Insufficient buyer ZIG balance for logistics escrow");
             }
             user.setZigBalance(current - amount);
         }
         userRepository.save(user);
+    }
+
+    private void validateBuyerCanFundLogistics(LogisticsRequest request) {
+        if (request.getOrder() == null || request.getOrder().getBuyer() == null) {
+            return;
+        }
+        Double amount = getValidLogisticsCost(request);
+        Currency currency = request.getOrder().getCurrency() != null ? request.getOrder().getCurrency() : Currency.USD;
+        User buyer = request.getOrder().getBuyer();
+        double balance = currency == Currency.USD
+                ? buyer.getUsdBalance() != null ? buyer.getUsdBalance() : 0.0
+                : buyer.getZigBalance() != null ? buyer.getZigBalance() : 0.0;
+        if (balance < amount) {
+            throw new IllegalArgumentException("Logistics cost cannot exceed buyer " + currency + " balance");
+        }
+    }
+
+    private Double getValidLogisticsCost(LogisticsRequest request) {
+        Double amount = request.getCost();
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("Logistics cost must be greater than zero");
+        }
+        return amount;
     }
 
     private void addBalance(User user, Currency currency, Double amount) {
