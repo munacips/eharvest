@@ -1,6 +1,6 @@
 package com.munashechipanga.eharvest.dtos;
 
-import com.munashechipanga.eharvest.entities.User;
+import com.munashechipanga.eharvest.dtos.response.UserResponseDTO;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +13,8 @@ public class ReviewDto {
     private Integer rating;
     private String comment;
     private LocalDateTime createdAt;
-    private User reviewer;
-    private User reviewee;
+    private Long reviewerId;
+    private Long revieweeId;
+    private UserResponseDTO reviewer;
+    private UserResponseDTO reviewee;
 }
