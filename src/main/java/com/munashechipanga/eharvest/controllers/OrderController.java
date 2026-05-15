@@ -55,6 +55,11 @@ public class OrderController {
         return ResponseEntity.ok(orderService.rejectOrder(id, reason));
     }
 
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<OrderResponseDTO> cancelOrder(@PathVariable Long id, @RequestParam(required = false) String reason){
+        return ResponseEntity.ok(orderService.cancelOrder(id, reason));
+    }
+
     @PostMapping("/{id}/hold-escrow")
     public ResponseEntity<OrderResponseDTO> holdEscrow(@PathVariable Long id){
         return ResponseEntity.ok(orderService.holdEscrow(id));

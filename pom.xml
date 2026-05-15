@@ -92,6 +92,11 @@
 
         <!-- Vonage uses HTTP REST calls; no SDK required here. If you prefer the Vonage SDK, add it later. -->
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

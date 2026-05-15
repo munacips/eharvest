@@ -33,13 +33,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configure(http))  // Enable CORS
+                .cors(cors -> cors.configure(http)) // Enable CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()     // login + register = public
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/buyers").permitAll() // public registration
+                        .requestMatchers("/auth/**").permitAll() // login + register = public
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/buyers").permitAll() // public
+                                                                                                                 // registration
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/farmers").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/logistics-providers").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/logistics-providers")
+                        .permitAll()
                         .requestMatchers("/api/v1/heatmap/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/v1/payments/webhook", "/api/v1/payments/return").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/subscriptions/buyer/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/subscriptions/farmer/**").authenticated()
@@ -48,8 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/farmer/**").hasRole("FARMER")
                         .requestMatchers("/buyer/**").hasRole("BUYER")
                         .requestMatchers("/logistics/**").hasRole("LOGISTICS")
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // register JWT filter before username/password filter

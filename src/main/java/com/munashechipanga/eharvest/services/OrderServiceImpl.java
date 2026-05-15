@@ -114,6 +114,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
+        String previousStatus = order.getStatus();
+
         if(dto.getStatus() != null) order.setStatus(dto.getStatus());
         if(dto.getEscrowReleased() != null) order.setEscrowReleased(dto.getEscrowReleased());
 
@@ -149,6 +151,7 @@ public class OrderServiceImpl implements OrderService {
             order.setEscrowAmount(dto.getEscrowAmount());
         }
 
+        reconcileOrderOutcomeStats(order, previousStatus, order.getStatus());
         Order updatedOrder = orderRepository.save(order);
 
         return mapToDto(updatedOrder);
@@ -208,12 +211,36 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponseDTO rejectOrder(Long id, String reason) {
         Order order = getOrderEntity(id);
+        String previousStatus = order.getStatus();
         order.setStatus(OrderStatus.REJECTED.name());
+        reconcileOrderOutcomeStats(order, previousStatus, order.getStatus());
         Order saved = orderRepository.save(order);
         if (saved.getEscrowHeld() != null && saved.getEscrowHeld() && !Boolean.TRUE.equals(saved.getEscrowReleased())) {
             refundEscrow(saved);
         }
         notifyOrderParties(saved, "Order rejected", "Order " + saved.getId() + " was rejected. " + (reason != null ? reason : ""));
+        return mapToDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponseDTO cancelOrder(Long id, String reason) {
+        Order order = getOrderEntity(id);
+        if (isTerminalSuccessStatus(order.getStatus())) {
+            throw new IllegalArgumentException("Delivered orders cannot be cancelled");
+        }
+        if (isTerminalFailureStatus(order.getStatus()) && OrderStatus.CANCELLED.name().equals(order.getStatus())) {
+            return mapToDto(order);
+        }
+
+        String previousStatus = order.getStatus();
+        order.setStatus(OrderStatus.CANCELLED.name());
+        reconcileOrderOutcomeStats(order, previousStatus, order.getStatus());
+        Order saved = orderRepository.save(order);
+        if (saved.getEscrowHeld() != null && saved.getEscrowHeld() && !Boolean.TRUE.equals(saved.getEscrowReleased())) {
+            refundEscrow(saved);
+        }
+        notifyOrderParties(saved, "Order cancelled", "Order " + saved.getId() + " was cancelled. " + (reason != null ? reason : ""));
         return mapToDto(saved);
     }
 
@@ -269,10 +296,12 @@ public class OrderServiceImpl implements OrderService {
         if (!validStatus) {
             throw new IllegalArgumentException("Order must be in transit before delivery confirmation");
         }
+        String previousStatus = order.getStatus();
         order.setStatus(OrderStatus.DELIVERED.name());
         if (Boolean.TRUE.equals(order.getEscrowHeld()) && !Boolean.TRUE.equals(order.getEscrowReleased())) {
             releaseEscrow(order);
         }
+        reconcileOrderOutcomeStats(order, previousStatus, order.getStatus());
         Order saved = orderRepository.save(order);
         notifyOrderParties(saved, "Order delivered", "Order " + saved.getId() + " marked as delivered.");
         return mapToDto(saved);
@@ -436,6 +465,63 @@ public class OrderServiceImpl implements OrderService {
         txn.setType(type);
         txn.setProvider("IN_APP");
         transactionRepository.save(txn);
+    }
+
+    private void reconcileOrderOutcomeStats(Order order, String previousStatus, String newStatus) {
+        if (previousStatus == null && newStatus == null) {
+            return;
+        }
+        if (previousStatus != null && previousStatus.equals(newStatus)) {
+            return;
+        }
+
+        if (isTerminalSuccessStatus(previousStatus) && !isTerminalSuccessStatus(newStatus)) {
+            adjustSuccessfulCounts(order.getBuyer(), order.getFarmer(), -1);
+        } else if (!isTerminalSuccessStatus(previousStatus) && isTerminalSuccessStatus(newStatus)) {
+            adjustSuccessfulCounts(order.getBuyer(), order.getFarmer(), 1);
+        }
+
+        if (isTerminalFailureStatus(previousStatus) && !isTerminalFailureStatus(newStatus)) {
+            adjustUnsuccessfulCounts(order.getBuyer(), order.getFarmer(), -1);
+        } else if (!isTerminalFailureStatus(previousStatus) && isTerminalFailureStatus(newStatus)) {
+            adjustUnsuccessfulCounts(order.getBuyer(), order.getFarmer(), 1);
+        }
+    }
+
+    private boolean isTerminalSuccessStatus(String status) {
+        return OrderStatus.DELIVERED.name().equals(status);
+    }
+
+    private boolean isTerminalFailureStatus(String status) {
+        return OrderStatus.REJECTED.name().equals(status) || OrderStatus.CANCELLED.name().equals(status);
+    }
+
+    private void adjustSuccessfulCounts(Buyer buyer, Farmer farmer, int delta) {
+        if (buyer != null) {
+            buyer.setSuccessfulBuys(adjustCount(buyer.getSuccessfulBuys(), delta));
+            buyerRepository.save(buyer);
+        }
+        if (farmer != null) {
+            farmer.setSuccessfulSales(adjustCount(farmer.getSuccessfulSales(), delta));
+            farmerRepository.save(farmer);
+        }
+    }
+
+    private void adjustUnsuccessfulCounts(Buyer buyer, Farmer farmer, int delta) {
+        if (buyer != null) {
+            buyer.setUnsuccessfulBuys(adjustCount(buyer.getUnsuccessfulBuys(), delta));
+            buyerRepository.save(buyer);
+        }
+        if (farmer != null) {
+            farmer.setUnsuccessfulSales(adjustCount(farmer.getUnsuccessfulSales(), delta));
+            farmerRepository.save(farmer);
+        }
+    }
+
+    private int adjustCount(Integer currentValue, int delta) {
+        int current = currentValue != null ? currentValue : 0;
+        int updated = current + delta;
+        return Math.max(updated, 0);
     }
 
     private void subtractBalance(User user, Currency currency, Double amount) {

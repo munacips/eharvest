@@ -16,6 +16,7 @@ public interface OrderService {
 
     OrderResponseDTO acceptOrder(Long id);
     OrderResponseDTO rejectOrder(Long id, String reason);
+    OrderResponseDTO cancelOrder(Long id, String reason);
     OrderResponseDTO holdEscrow(Long id);
     OrderResponseDTO confirmDeliveryStarted(Long id);
     OrderResponseDTO confirmDelivery(Long id);
