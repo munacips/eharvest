@@ -1,26 +1,46 @@
 package com.munashechipanga.eharvest.heatmap;
 
-import com.munashechipanga.eharvest.market.Market;
+import com.munashechipanga.eharvest.entities.Produce;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface HeatmapRepository extends JpaRepository<Market, Long> {
+public interface HeatmapRepository extends JpaRepository<Produce, Long> {
 
     @Query("""
-            select new com.munashechipanga.eharvest.heatmap.HeatmapPointDto(
-                m.city,
-                m.latitude,
-                m.longitude,
-                coalesce(sum(p.quantity), 0.0),
-                cast(count(p.id) as integer),
-                0.0
-            )
-            from Market m
-            left join Produce p on p.market = m and lower(p.name) = lower(:crop)
-            group by m.city, m.latitude, m.longitude
+            select p
+            from Produce p
+            where lower(p.name) = lower(:crop)
             """)
-    List<HeatmapPointDto> findSupplyHeatmapByCrop(@Param("crop") String crop);
+    List<Produce> findByCrop(@Param("crop") String crop);
+
+    @Query("""
+            select p
+            from Produce p
+            where p.farmer.id = :farmerId
+              and p.cityTown = :cityTown
+              and p.latitude is not null
+              and p.longitude is not null
+            order by p.id asc
+            """)
+    List<Produce> findFallbackByFarmerAndCity(
+            @Param("farmerId") Long farmerId,
+            @Param("cityTown") String cityTown
+    );
+
+    @Query("""
+            select p
+            from Produce p
+            where p.farmer.id = :farmerId
+              and lower(p.name) = lower(:crop)
+              and p.latitude is not null
+              and p.longitude is not null
+            order by p.id asc
+            """)
+    List<Produce> findFallbackByFarmerAndCrop(
+            @Param("farmerId") Long farmerId,
+            @Param("crop") String crop
+    );
 }

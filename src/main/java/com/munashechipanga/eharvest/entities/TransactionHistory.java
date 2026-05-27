@@ -39,7 +39,7 @@ public class TransactionHistory {
     @JoinColumn(name = "farmer_id")
     private Farmer farmer;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
 }

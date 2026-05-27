@@ -48,6 +48,9 @@ class OrderServiceImplTest {
     @Mock
     NotificationService notificationService;
 
+    @Mock
+    ReviewService reviewService;
+
     @InjectMocks
     OrderServiceImpl orderService;
 
@@ -66,6 +69,7 @@ class OrderServiceImplTest {
         assertThat(farmer.getSuccessfulSales()).isEqualTo(1);
         verify(buyerRepository).save(buyer);
         verify(farmerRepository).save(farmer);
+        verify(reviewService).createPendingReviewsForOrder(order);
     }
 
     @Test

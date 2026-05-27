@@ -35,6 +35,11 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReviewsByRevieweeId(revieweeId));
     }
 
+    @GetMapping("/pending/reviewer/{reviewerId}")
+    public ResponseEntity<List<ReviewDto>> getPendingReviewsByReviewer(@PathVariable Long reviewerId) {
+        return ResponseEntity.ok(reviewService.getPendingReviewsByReviewerId(reviewerId));
+    }
+
     @PostMapping
     public ResponseEntity<ReviewDto> createReview(@RequestBody ReviewDto dto) {
         return ResponseEntity.ok(reviewService.createReview(dto));
@@ -49,5 +54,10 @@ public class ReviewController {
     public ResponseEntity<ReviewDto> deleteReview(@PathVariable Long id) {
         reviewService.deleteReview(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/order/{id}")
+    public ResponseEntity<List<ReviewDto>> getReviewsByOrderId(@PathVariable Long id) {
+        return ResponseEntity.ok(reviewService.getReviewsByOrderId(id));
     }
 }

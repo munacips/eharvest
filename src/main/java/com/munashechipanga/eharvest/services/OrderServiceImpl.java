@@ -52,6 +52,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     NotificationService notificationService;
 
+    @Autowired
+    ReviewService reviewService;
+
     @Override
     @Transactional
     public OrderResponseDTO createOrder(CreateOrderDTO dto) {
@@ -290,6 +293,10 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDTO confirmDelivery(Long id) {
         Order order = getOrderEntity(id);
         LogisticsType logisticsType = getLogisticsType(order);
+        if (OrderStatus.DELIVERED.name().equals(order.getStatus())) {
+            reviewService.createPendingReviewsForOrder(order);
+            return mapToDto(order);
+        }
         boolean validStatus = logisticsType == LogisticsType.BUYER_PICKUP
                 ? OrderStatus.ACCEPTED.name().equals(order.getStatus())
                 : OrderStatus.IN_TRANSIT.name().equals(order.getStatus());
@@ -303,6 +310,7 @@ public class OrderServiceImpl implements OrderService {
         }
         reconcileOrderOutcomeStats(order, previousStatus, order.getStatus());
         Order saved = orderRepository.save(order);
+        reviewService.createPendingReviewsForOrder(saved);
         notifyOrderParties(saved, "Order delivered", "Order " + saved.getId() + " marked as delivered.");
         return mapToDto(saved);
     }
