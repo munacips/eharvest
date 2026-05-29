@@ -69,9 +69,9 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         PaynowInitResponse response = dto.getType() == TransactionType.DEPOSIT
-                ? paynowClient.initiateDeposit(dto.getEmail(), dto.getPhoneNumber(), dto.getAmount(),
+                ? paynowClient.initiateDeposit(null, dto.getPhoneNumber(), dto.getAmount(),
                 dto.getCurrency().name(), txn.getTransactionReference())
-                : paynowClient.initiateWithdraw(dto.getEmail(), dto.getPhoneNumber(), dto.getAmount(),
+                : paynowClient.initiateWithdraw(null, dto.getPhoneNumber(), dto.getAmount(),
                 dto.getCurrency().name(), txn.getTransactionReference());
 
         txn.setProviderReference(response.getProviderReference());

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review,Long>, JpaSpecificationExecutor<Review> {
@@ -25,4 +26,16 @@ public interface ReviewRepository extends JpaRepository<Review,Long>, JpaSpecifi
               and r.status = com.munashechipanga.eharvest.enums.ReviewStatus.COMPLETED
             """)
     Double findAverageRatingForUser(@Param("userId") Long userId);
+
+    @Query("""
+            select r
+            from Review r
+            left join fetch r.order
+            left join fetch r.reviewer
+            left join fetch r.reviewee
+            where r.createdAt between :from and :to
+            order by r.createdAt asc
+            """)
+    List<Review> findAllForReportBetween(@Param("from") LocalDateTime from,
+                                         @Param("to") LocalDateTime to);
 }

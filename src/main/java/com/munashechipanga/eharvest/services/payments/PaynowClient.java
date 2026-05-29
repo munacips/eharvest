@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -18,12 +20,16 @@ import java.text.DecimalFormatSymbols;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class PaynowClient {
     private static final String INITIATE_URL = "https://www.paynow.co.zw/interface/initiatetransaction";
     private static final DecimalFormat AMOUNT_FORMAT =
             new DecimalFormat("0.00", DecimalFormatSymbols.getInstance(Locale.US));
+
+    private static final Logger logger = LoggerFactory.getLogger(PaynowClient.class);
 
     @Value("${paynow.integration.id:}")
     private String integrationId;
@@ -64,10 +70,15 @@ public class PaynowClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         String rawResponse = restTemplate.postForObject(INITIATE_URL, new HttpEntity<>(form, headers), String.class);
-        Map<String, String> parsed = parseFormEncoded(rawResponse);
+        Map<String, String> parsed = parseResponseFields(rawResponse);
+        logger.warn("Paynow raw response snippet: {}", snippet(rawResponse));
+        logger.warn("Paynow parsed response fields: {}", parsed);
+        String computedHash = generateHash(parsed);
+        logger.warn("Paynow supplied hash: {}, computed hash: {}", value(parsed, "hash"), computedHash);
 
-        if (!isHashValid(parsed)) {
-            throw new IllegalStateException("Invalid Paynow response hash");
+        String suppliedHash = value(parsed, "hash");
+        if (suppliedHash == null || suppliedHash.isBlank() || !suppliedHash.equalsIgnoreCase(computedHash)) {
+            throw new IllegalStateException("Invalid Paynow response hash. Raw response snippet: " + snippet(rawResponse));
         }
 
         PaynowInitResponse response = new PaynowInitResponse();
@@ -116,8 +127,78 @@ public class PaynowClient {
         return values;
     }
 
+    public Map<String, String> parseResponseFields(String body) {
+        if (body == null || body.isBlank()) {
+            return new LinkedHashMap<>();
+        }
+
+        String trimmed = body.trim();
+        if (looksLikeHtml(trimmed)) {
+            Map<String, String> htmlFields = parseHtmlInputs(trimmed);
+            if (!htmlFields.isEmpty()) {
+                return htmlFields;
+            }
+        }
+
+        Map<String, String> formFields = parseFormEncoded(trimmed);
+        if (!formFields.isEmpty()) {
+            return formFields;
+        }
+
+        return new LinkedHashMap<>();
+    }
+
     private String buildReturnUrl(String reference) {
         return returnUrl.replace("{reference}", reference);
+    }
+
+    private boolean looksLikeHtml(String body) {
+        String lower = body.toLowerCase(Locale.ROOT);
+        return lower.startsWith("<") || lower.contains("<html") || lower.contains("<form") || lower.contains("<input");
+    }
+
+    private Map<String, String> parseHtmlInputs(String body) {
+        Map<String, String> values = new LinkedHashMap<>();
+        Matcher inputMatcher = Pattern.compile("(?is)<input\\b([^>]*?)>").matcher(body);
+        while (inputMatcher.find()) {
+            String attributes = inputMatcher.group(1);
+            String name = extractAttribute(attributes, "name");
+            if (name == null || name.isBlank()) {
+                continue;
+            }
+            String value = extractAttribute(attributes, "value");
+            values.put(name, unescapeHtml(value != null ? value : ""));
+        }
+        return values;
+    }
+
+    private String extractAttribute(String attributes, String attributeName) {
+        Matcher quoted = Pattern.compile("(?is)\\b" + Pattern.quote(attributeName) + "\\s*=\\s*(['\"])(.*?)\\1").matcher(attributes);
+        if (quoted.find()) {
+            return quoted.group(2);
+        }
+        Matcher unquoted = Pattern.compile("(?is)\\b" + Pattern.quote(attributeName) + "\\s*=\\s*([^\\s>]+)").matcher(attributes);
+        if (unquoted.find()) {
+            return unquoted.group(1);
+        }
+        return null;
+    }
+
+    private String unescapeHtml(String value) {
+        return value
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'");
+    }
+
+    private String snippet(String value) {
+        if (value == null) {
+            return "<null>";
+        }
+        String trimmed = value.replaceAll("\\s+", " ").trim();
+        return trimmed.length() <= 500 ? trimmed : trimmed.substring(0, 500) + "...";
     }
 
     private void requireConfigured() {
@@ -127,6 +208,7 @@ public class PaynowClient {
     }
 
     private String generateHash(Map<String, String> values) {
+        // Preserve the exact field order received from Paynow.
         StringBuilder raw = new StringBuilder();
         values.forEach((key, value) -> {
             if (!"hash".equalsIgnoreCase(key)) {
