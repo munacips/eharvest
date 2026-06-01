@@ -18,6 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -73,10 +74,31 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));
-        configuration.setAllowCredentials(false); // Add your frontend URLs
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+
+        // CORS for Flutter apps and production
+        // Flutter apps don't enforce same-origin policy, but we need proper headers for WebSocket
+        // Production IP: 34.206.207.121 (AWS EC2)
+
+        List<String> allowedOrigins = List.of(
+                "http://localhost:*",          // Local development
+                "http://127.0.0.1:*",          // Local development
+                "http://192.168.*.*:*",        // Local network
+                "http://34.206.207.121:*",     // Production AWS EC2
+                "http://34.206.207.121",       // Production AWS EC2 (no port)
+                "http://34.206.207.121:8080",  // Production Backend
+                "http://34.206.207.121:80",    // Production Flutter Web
+                "http://34.206.207.121:8000"   // Production AI Service
+        );
+
+        // Production: Use specific origins. Flutter handles security via JWT
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
+
+        configuration.setAllowCredentials(true); // Required for WebSocket with JWT auth
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList("Content-Range", "X-Content-Range", "Authorization", "X-Total-Count"));
+        configuration.setMaxAge(86400L); // 24 hours for production
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
