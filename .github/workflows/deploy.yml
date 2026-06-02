@@ -32,4 +32,4 @@ jobs:
           script: |
             cd /home/ubuntu/eharvest_main
             docker compose pull backend
-            docker compose up -d --force-reacreate backend
+            docker compose up -d --force-recreate backend
