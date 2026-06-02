@@ -1,8 +1,9 @@
-# Stage 1: Build (Optional, if you want to build the jar inside Docker)
+# Stage 1: Build
 FROM eclipse-temurin:21-jdk-jammy as build
 WORKDIR /app
 COPY . .
 RUN ./mvnw clean package -DskipTests
+RUN jar tf target/*.jar | grep report.css || echo "MISSING: report.css not in JAR"
 
 # Stage 2: Run
 FROM eclipse-temurin:21-jre-jammy
