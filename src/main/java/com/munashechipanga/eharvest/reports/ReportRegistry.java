@@ -17,7 +17,7 @@ public class ReportRegistry {
         Map<String, ReportDescriptor> registry = new LinkedHashMap<>();
         register(registry, "sales_summary", "Sales Summary",
                 "Revenue, order count, and average order value by day.",
-                List.of("ROLE_ADMIN", "ROLE_BUYER"),
+                List.of("ADMIN", "BUYER"),
                 List.of("from", "to"));
         register(registry, "orders_fulfillment_funnel", "Orders Fulfillment Funnel",
                 "Volume across order lifecycle stages with timing approximations from existing delivery data.",

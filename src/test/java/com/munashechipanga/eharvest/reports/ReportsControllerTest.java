@@ -1,6 +1,7 @@
 package com.munashechipanga.eharvest.reports;
 
 import com.munashechipanga.eharvest.reports.dto.ReportDescriptor;
+import com.munashechipanga.eharvest.reports.exceptions.ReportGenerationException;
 import com.munashechipanga.eharvest.reports.exceptions.ReportNotAllowedException;
 import com.munashechipanga.eharvest.security.JwtFilter;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,8 @@ import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -16,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -26,17 +29,30 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ReportsController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ReportApiExceptionHandler.class)
+@Import({ReportApiExceptionHandler.class, ReportsControllerTest.MockBeanConfiguration.class})
 class ReportsControllerTest {
+
+    @Autowired
+    private ReportService reportService;
+
+    @Autowired
+    private JwtFilter jwtFilter;
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private ReportService reportService;
+    @TestConfiguration
+    static class MockBeanConfiguration {
+        @Bean
+        ReportService reportService() {
+            return mock(ReportService.class);
+        }
 
-    @MockBean
-    private JwtFilter jwtFilter;
+        @Bean
+        JwtFilter jwtFilter() {
+            return mock(JwtFilter.class);
+        }
+    }
 
     @Test
     void availableReportsReturnsOnlyAllowedReportsForUser() throws Exception {
@@ -85,5 +101,20 @@ class ReportsControllerTest {
                         .with(user("farmer").roles("FARMER")))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not allowed to generate report 'sales_summary'."));
+    }
+
+    @Test
+    void generateReturnsPdfCompatibleErrorWhenClientAcceptsPdfOnly() throws Exception {
+        when(reportService.generatePdf(ArgumentMatchers.eq("sales_summary"), ArgumentMatchers.any(), ArgumentMatchers.any()))
+                .thenThrow(new ReportGenerationException("Failed to load report stylesheet.", new RuntimeException("missing css")));
+
+        mockMvc.perform(get("/api/reports/generate/sales_summary")
+                        .param("from", "2026-01-01")
+                        .param("to", "2026-05-26")
+                        .accept(MediaType.APPLICATION_PDF)
+                        .with(user("buyer").roles("BUYER")))
+                .andExpect(status().isInternalServerError())
+                .andExpect(header().string("Content-Type", MediaType.APPLICATION_PDF_VALUE))
+                .andExpect(content().bytes(new byte[0]));
     }
 }
