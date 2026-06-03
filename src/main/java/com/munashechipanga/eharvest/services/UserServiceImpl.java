@@ -58,6 +58,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 lp.setDefensiveId(dto.getDefensiveId());
                 user = lp;
                 break;
+            case "ADMIN":
+                user = new User();
+                break;
             default:
                 throw new IllegalArgumentException("Invalid role: " + dto.getRole());
         }
@@ -202,6 +205,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 dto.setLicenseNumber(provider.getLicenseNumber());
             }
             default -> {
+                if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+                    dto.setRole("ADMIN");
+                }
             }
         }
 

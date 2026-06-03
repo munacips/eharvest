@@ -42,6 +42,9 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserRequestDTO dto) {
+        if (dto.getRole() != null && "ADMIN".equalsIgnoreCase(dto.getRole())) {
+            return ResponseEntity.badRequest().body("Admin accounts cannot be registered publicly");
+        }
 
         UserResponseDTO saved = userService.createUser(dto);
 

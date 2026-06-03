@@ -13,7 +13,7 @@ public class UserRequestDTO {
     private String email;
     private String phoneNumber;
     private String password;
-    private String role;// "FARMER", "BUYER", "LOGISTICS"
+    private String role;// "FARMER", "BUYER", "LOGISTICS", "ADMIN"
     private String nationalId;
     private String address;
     private Boolean active;
